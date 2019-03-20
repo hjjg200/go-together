@@ -9,6 +9,7 @@ type HoldSwitch struct {
     mx     sync.Mutex
     count  int
     queue  chan wait
+    aside  []wait
     closer chan struct{}
 
     beginHandlers map[int] func()
@@ -56,8 +57,8 @@ func NewHoldSwitch() *HoldSwitch {
 
 func( hs *HoldSwitch ) loop() {
 
-    aside := make( []wait, 0 )
-    do    := func( w wait ) {
+    hs.aside = make( []wait, 0 )
+    do      := func( w wait ) {
         if hs.at == w.at {
             hs.count += w.delta
             w.closer <- struct{}{}
@@ -83,7 +84,7 @@ func( hs *HoldSwitch ) loop() {
                 w.closer <- struct{}{}
 
             } else {
-                aside = append( aside, w )
+                hs.aside = append( hs.aside, w )
             }
         }
     }
@@ -98,10 +99,10 @@ func( hs *HoldSwitch ) loop() {
             do( w )
 
             // Aside
-            if len( aside ) > 0 {
-                cp := make( []wait, len( aside ) )
-                copy( cp, aside )
-                aside = make( []wait, 0 )
+            if len( hs.aside ) > 0 {
+                cp := make( []wait, len( hs.aside ) )
+                copy( cp, hs.aside )
+                hs.aside = make( []wait, 0 )
                 for _, aw := range cp {
                     do( aw )
                 }
@@ -109,7 +110,7 @@ func( hs *HoldSwitch ) loop() {
 
             // Call the closer if any
                 // Not wait and count is at 0
-            if len( aside ) == 0 && len( hs.queue ) == 0 && hs.count == 0 {
+            if hs.IsEmpty() {
                 if hs.closer != nil {
                     hs.closer <- struct{}{}
                     hs.closer = nil
@@ -149,9 +150,21 @@ func( hs *HoldSwitch ) Done( at int ) {
     hs.Add( at, -1 )
 }
 
+func( hs *HoldSwitch ) IsEmpty() bool {
+    return len( hs.aside ) == 0 && len( hs.queue ) == 0 && hs.count == 0
+}
+
 func( hs *HoldSwitch ) WaitAll() {
+
+    // return if there is no queue
+    if hs.IsEmpty() {
+        return
+    }
+
+    // if not wait
     hs.closer = make( chan struct{}, 1 )
     <- hs.closer
+
 }
 
 func( hs *HoldSwitch ) Handlers( at int, begin func(), end func() ) {
