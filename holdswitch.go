@@ -61,21 +61,23 @@ func( hs *HoldSwitch ) loop() {
     do      := func( w wait ) {
         if hs.at == w.at {
             hs.count += w.delta
+
+            if hs.count == 0 {
+                // End
+                if ed, ok := hs.endHandlers[hs.at]; ok && ed != nil {
+                    ed()
+                }
+            }
+
             w.closer <- struct{}{}
         } else {
             if hs.count == 0 {
 
                 // At
-                lastAt  := hs.at
                 hs.at    = w.at
                 hs.count = w.delta
 
-                // Begin and End
-                if lastAt != -1 {
-                    if ed, ok := hs.endHandlers[lastAt]; ok && ed != nil {
-                        ed()
-                    }
-                }
+                // Begin
                 if bg, ok := hs.beginHandlers[w.at]; ok && bg != nil {
                     bg()
                 }
