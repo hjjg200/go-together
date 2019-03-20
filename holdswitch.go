@@ -1,6 +1,7 @@
 package together
 
 import (
+    "errors"
     "sync"
 )
 
@@ -21,6 +22,10 @@ type wait struct {
     delta  int
     closer chan struct{}
 }
+
+var (
+    ErrAlreadyClosed = errors.New( "together: it is already closed" )
+)
 
 /*
 
@@ -61,24 +66,20 @@ func( hs *HoldSwitch ) loop() {
     do      := func( w wait ) {
         if hs.at == w.at {
             hs.count += w.delta
-
-            if hs.count == 0 {
-                // End
-                if ed, ok := hs.endHandlers[hs.at]; ok && ed != nil {
-                    ed()
-                }
-            }
-
             w.closer <- struct{}{}
         } else {
             if hs.count == 0 {
 
                 // At
+                lastAt  := hs.at
                 hs.at    = w.at
                 hs.count = w.delta
 
-                // Begin
-                if bg, ok := hs.beginHandlers[w.at]; ok && bg != nil {
+                // Begin and End
+                if ed, ok := hs.endHandlers[lastAt]; ok && ed != nil && lastAt != -1 {
+                    ed()
+                }
+                if bg, ok := hs.beginHandlers[w.at]; ok && bg != nil && w.at != -1 {
                     bg()
                 }
 
@@ -126,14 +127,8 @@ func( hs *HoldSwitch ) loop() {
 
 }
 
-func( hs *HoldSwitch ) Add( at, delta int ) {
+func( hs *HoldSwitch ) add( at, delta int ) {
 
-    if at < 0 {
-        // panic
-        return
-    }
-
-    //
     closer := make( chan struct{}, 1 )
 
     hs.mx.Lock()
@@ -148,8 +143,27 @@ func( hs *HoldSwitch ) Add( at, delta int ) {
 
 }
 
+func( hs *HoldSwitch ) Add( at, delta int ) {
+
+    if at < 0 {
+        // panic
+        return
+    }
+
+    hs.add( at, delta )
+
+}
+
 func( hs *HoldSwitch ) Done( at int ) {
     hs.Add( at, -1 )
+}
+
+func( hs *HoldSwitch ) Close() error {
+    if hs.at == -1 {
+        return ErrAlreadyClosed
+    }
+    hs.add( -1, 0 )
+    return nil
 }
 
 func( hs *HoldSwitch ) IsEmpty() bool {
