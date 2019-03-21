@@ -50,6 +50,4 @@ func Test1( t *testing.T ) {
 
     hs.WaitAll()
 
-    t.Error( "A" )
-
 }

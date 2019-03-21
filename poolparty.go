@@ -21,9 +21,6 @@ type PoolParty struct {
 
     // The channels of functions the PoolParty will use.
     pool []chan func()
-
-    // The count of queued functions.
-    count []int
 }
 
 func NewPoolParty( threads int ) *PoolParty {
@@ -40,8 +37,6 @@ func NewPoolParty( threads int ) *PoolParty {
     for i := range pp.pool {
         pp.pool[i] = make( chan func() )
     }
-
-    pp.count = make( []int, threads )
 
     pp.start()
 
@@ -70,8 +65,7 @@ func ( pp *PoolParty ) Join( f func() ) {
 
     mi := pp.minIndex()
     pp.wg.Add( 1 )
-    pp.count[mi] += 1
-    pp.pool[mi]  <- f
+    pp.pool[mi] <- f
 
     pp.mx.Unlock()
 
@@ -91,15 +85,14 @@ func ( pp *PoolParty ) Close() {
     }
 
     pp.pool  = nil
-    pp.count = nil
 
 }
 
 func ( pp *PoolParty ) minIndex() int {
 
     mi := 0
-    for i := range pp.count {
-        if pp.count[i] < pp.count[mi] {
+    for i := range pp.pool {
+        if len( pp.pool[i] ) < len( pp.pool[mi] ) {
             mi = i
         }
     }
