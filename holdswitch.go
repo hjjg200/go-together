@@ -92,37 +92,38 @@ func( hs *HoldSwitch ) loop() {
         }
     }
 
-    for {
-        select {
-        case w := <- hs.queue:
+    for w := range hs.queue {
 
-            hs.mx.Lock()
+        hs.mx.Lock()
 
-            // Main
-            do( w )
+        // Main
+        do( w )
 
-            // Aside
-            if len( hs.aside ) > 0 {
-                cp := make( []wait, len( hs.aside ) )
-                copy( cp, hs.aside )
-                hs.aside = make( []wait, 0 )
-                for _, aw := range cp {
-                    do( aw )
-                }
+        // Aside
+        if len( hs.aside ) > 0 {
+            cp := make( []wait, len( hs.aside ) )
+            copy( cp, hs.aside )
+            hs.aside = make( []wait, 0 )
+            for _, aw := range cp {
+                do( aw )
             }
-
-            // Call the closer if any
-                // Not wait and count is at 0
-            if hs.IsEmpty() {
-                if hs.closer != nil {
-                    hs.closer <- struct{}{}
-                    hs.closer = nil
-                }
-            }
-
-            hs.mx.Unlock()
-
         }
+
+        // Call the closer if any
+            // Not wait and count is at 0
+        if hs.IsEmpty() {
+            if hs.closer != nil {
+                hs.closer <- struct{}{}
+                hs.closer = nil
+            }
+            if hs.at == -1 {
+                hs.mx.Unlock()
+                break
+            }
+        }
+
+        hs.mx.Unlock()
+
     }
 
 }

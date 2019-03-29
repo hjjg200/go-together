@@ -49,5 +49,6 @@ func Test1( t *testing.T ) {
     time.Sleep( time.Nanosecond )
 
     hs.WaitAll()
+    hs.Close()
 
 }
