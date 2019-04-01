@@ -116,10 +116,6 @@ func( hs *HoldSwitch ) loop() {
                 hs.closer <- struct{}{}
                 hs.closer = nil
             }
-            if hs.at == -1 {
-                hs.mx.Unlock()
-                break
-            }
         }
 
         hs.mx.Unlock()
@@ -132,13 +128,11 @@ func( hs *HoldSwitch ) add( at, delta int ) {
 
     closer := make( chan struct{}, 1 )
 
-    hs.mx.Lock()
     hs.queue <- wait{
         at: at,
         delta: delta,
         closer: closer,
     }
-    hs.mx.Unlock()
 
     <- closer
 

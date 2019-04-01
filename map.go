@@ -42,11 +42,11 @@ func( mp *Map ) Get( key interface{} ) ( interface{}, bool ) {
 }
 
 func( mp *Map ) Set( key, val interface{} ) {
-    mp.mx.Lock()
     mp.hs.Add( c_mapStateWrite, 1 )
+    mp.mx.Lock()
     mp.body[key] = val
-    mp.hs.Done( c_mapStateWrite )
     mp.mx.Unlock()
+    mp.hs.Done( c_mapStateWrite )
 }
 
 func( mp *Map ) Values() <- chan interface{} {
