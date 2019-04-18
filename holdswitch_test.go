@@ -15,7 +15,7 @@ func log( args ...interface{} ) {
     fmt.Println( args... )
 }
 
-func Test1( t *testing.T ) {
+func TestHoldSwitch01( t *testing.T ) {
 
     hs := NewHoldSwitch()
 
