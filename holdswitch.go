@@ -24,7 +24,7 @@ type wait struct {
 }
 
 var (
-    ErrAlreadyClosed = errors.New( "together: it is already closed" )
+    ErrAlreadyClosed = errors.New("together: it is already closed")
 )
 
 /*
@@ -48,11 +48,11 @@ func NewHoldSwitch() *HoldSwitch {
     hs := &HoldSwitch{
         at: -1,
         count: 0,
-        queue: make( chan wait ),
+        queue: make(chan wait),
         closer: nil,
 
-        beginHandlers: make( map[int] func() ),
-        endHandlers: make( map[int] func() ),
+        beginHandlers: make(map[int] func()),
+        endHandlers: make(map[int] func()),
     }
 
     go hs.loop()
@@ -60,10 +60,10 @@ func NewHoldSwitch() *HoldSwitch {
 
 }
 
-func( hs *HoldSwitch ) loop() {
+func(hs *HoldSwitch) loop() {
 
-    hs.aside = make( []wait, 0 )
-    do      := func( w wait ) {
+    hs.aside = make([]wait, 0)
+    do      := func(w wait) {
         if hs.at == w.at {
             hs.count += w.delta
             w.closer <- struct{}{}
@@ -87,7 +87,7 @@ func( hs *HoldSwitch ) loop() {
                 w.closer <- struct{}{}
 
             } else {
-                hs.aside = append( hs.aside, w )
+                hs.aside = append(hs.aside, w)
             }
         }
     }
@@ -97,15 +97,15 @@ func( hs *HoldSwitch ) loop() {
         hs.mx.Lock()
 
         // Main
-        do( w )
+        do(w)
 
         // Aside
-        if len( hs.aside ) > 0 {
-            cp := make( []wait, len( hs.aside ) )
-            copy( cp, hs.aside )
-            hs.aside = make( []wait, 0 )
+        if len(hs.aside) > 0 {
+            cp := make([]wait, len(hs.aside))
+            copy(cp, hs.aside)
+            hs.aside = make([]wait, 0)
             for _, aw := range cp {
-                do( aw )
+                do(aw)
             }
         }
 
@@ -124,9 +124,9 @@ func( hs *HoldSwitch ) loop() {
 
 }
 
-func( hs *HoldSwitch ) add( at, delta int ) {
+func(hs *HoldSwitch) add(at, delta int) {
 
-    closer := make( chan struct{}, 1 )
+    closer := make(chan struct{}, 1)
 
     hs.queue <- wait{
         at: at,
@@ -138,34 +138,34 @@ func( hs *HoldSwitch ) add( at, delta int ) {
 
 }
 
-func( hs *HoldSwitch ) Add( at, delta int ) {
+func(hs *HoldSwitch) Add(at, delta int) {
 
     if at < 0 {
         // panic
         return
     }
 
-    hs.add( at, delta )
+    hs.add(at, delta)
 
 }
 
-func( hs *HoldSwitch ) Done( at int ) {
-    hs.Add( at, -1 )
+func(hs *HoldSwitch) Done(at int) {
+    hs.Add(at, -1)
 }
 
-func( hs *HoldSwitch ) Close() error {
+func(hs *HoldSwitch) Close() error {
     if hs.at == -1 {
         return ErrAlreadyClosed
     }
-    hs.add( -1, 0 )
+    hs.add(-1, 0)
     return nil
 }
 
-func( hs *HoldSwitch ) IsEmpty() bool {
+func(hs *HoldSwitch) IsEmpty() bool {
     return len( hs.aside ) == 0 && len( hs.queue ) == 0 && hs.count == 0
 }
 
-func( hs *HoldSwitch ) WaitAll() {
+func(hs *HoldSwitch) WaitAll() {
 
     // return if there is no queue
     if hs.IsEmpty() {
@@ -173,12 +173,12 @@ func( hs *HoldSwitch ) WaitAll() {
     }
 
     // if not wait
-    hs.closer = make( chan struct{}, 1 )
+    hs.closer = make(chan struct{}, 1)
     <- hs.closer
 
 }
 
-func( hs *HoldSwitch ) Handlers( at int, begin func(), end func() ) {
+func(hs *HoldSwitch) Handlers(at int, begin func(), end func()) {
     hs.beginHandlers[at] = begin
     hs.endHandlers[at]   = end
 }

@@ -17,9 +17,9 @@ type HoldGroup struct {
 
 func NewHoldGroup() *HoldGroup {
 
-    hg := new( HoldGroup )
-    hg.locks = make( map[interface{}] *sync.Mutex )
-    hg.queue = make( chan func() )
+    hg := new(HoldGroup)
+    hg.locks = make(map[interface{}] *sync.Mutex)
+    hg.queue = make(chan func())
 
     go func() {
         for f := range hg.queue {
@@ -31,7 +31,7 @@ func NewHoldGroup() *HoldGroup {
 
 }
 
-func ( hg *HoldGroup ) HoldAt( key interface{} ) {
+func(hg *HoldGroup) HoldAt(key interface{}) {
 
     hg.mx.Lock()
 
@@ -39,10 +39,10 @@ func ( hg *HoldGroup ) HoldAt( key interface{} ) {
         wg sync.WaitGroup
     )
 
-    wg.Add( 1 )
+    wg.Add(1)
     hg.queue <- func() {
         if _, ok := hg.locks[key]; !ok {
-            hg.locks[key] = new( sync.Mutex )
+            hg.locks[key] = new(sync.Mutex)
         }
         wg.Done()
     }
@@ -52,6 +52,6 @@ func ( hg *HoldGroup ) HoldAt( key interface{} ) {
 
 }
 
-func ( hg *HoldGroup ) UnholdAt( key interface{} ) {
+func(hg *HoldGroup) UnholdAt(key interface{}) {
     hg.locks[key].Unlock()
 }
