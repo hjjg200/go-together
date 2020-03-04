@@ -2,6 +2,7 @@ package together
 
 import (
     "errors"
+    "math"
     "sync"
 )
 
@@ -140,9 +141,8 @@ func(hs *HoldSwitch) add(at, delta int) {
 
 func(hs *HoldSwitch) Add(at, delta int) {
 
-    if at < 0 {
-        // panic
-        return
+    if at <= math.MinInt32 {
+        panic("Values equal to or lower than the minimum int32 value are not allowed.")
     }
 
     hs.add(at, delta)
@@ -154,15 +154,15 @@ func(hs *HoldSwitch) Done(at int) {
 }
 
 func(hs *HoldSwitch) Close() error {
-    if hs.at == -1 {
+    if hs.at == math.MinInt32 {
         return ErrAlreadyClosed
     }
-    hs.add(-1, 0)
+    hs.add(math.MinInt32, 0)
     return nil
 }
 
 func(hs *HoldSwitch) IsEmpty() bool {
-    return len( hs.aside ) == 0 && len( hs.queue ) == 0 && hs.count == 0
+    return len(hs.aside) == 0 && len(hs.queue) == 0 && hs.count == 0
 }
 
 func(hs *HoldSwitch) WaitAll() {
