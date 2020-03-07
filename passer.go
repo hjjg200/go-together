@@ -28,3 +28,7 @@ func (ps *Passer) Pass() {
         ps.p <- struct{}{}
     }()
 }
+
+func (ps *Passer) SetInterval(i time.Duration) {
+    ps.i = i
+}
