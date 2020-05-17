@@ -6,11 +6,10 @@ import (
 )
 
 func benchmarkPoolParty(cpu, bn int) {
-    runtime.GOMAXPROCS(cpu)
     pp := NewPoolParty(cpu)
     for i := 0; i < bn; i++ {
         pp.Join(func() {
-            for x := 0; x < 5000000; x++ {
+            for x := 0; x < 1000000; x++ {
                 _ = x
             }
         })

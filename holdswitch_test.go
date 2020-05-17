@@ -15,6 +15,19 @@ func log( args ...interface{} ) {
     fmt.Println( args... )
 }
 
+func BenchmarkHoldSwitch1(b *testing.B) {
+    hs := NewHoldSwitch()
+    for i := 0; i < 20000; i++ {
+        go func(x int) {
+            hs.Add(x, 1)
+            _ = x
+            hs.Done(x)
+        }(i)
+    }
+    hs.WaitAll()
+    hs.Close()
+}
+
 func TestHoldSwitch01( t *testing.T ) {
 
     hs := NewHoldSwitch()
