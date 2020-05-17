@@ -10,45 +10,29 @@ type HoldGroup struct {
 
     // Map of mutex
     locks map[interface{}] *sync.Mutex
-
-    // Queue of key creation
-    queue chan func()
 }
 
 func NewHoldGroup() *HoldGroup {
-
     hg := new(HoldGroup)
     hg.locks = make(map[interface{}] *sync.Mutex)
-    hg.queue = make(chan func())
-
-    go func() {
-        for f := range hg.queue {
-            f()
-        }
-    }()
 
     return hg
-
 }
 
 func(hg *HoldGroup) HoldAt(key interface{}) {
 
-    hg.mx.Lock()
-
-    var (
-        wg sync.WaitGroup
-    )
-
-    wg.Add(1)
-    hg.queue <- func() {
-        if _, ok := hg.locks[key]; !ok {
-            hg.locks[key] = new(sync.Mutex)
+    lock, ok := hg.locks[key]
+    if !ok {
+        hg.mx.Lock()
+        _, ok = hg.locks[key]
+        if !ok {
+            lock = new(sync.Mutex)
+            hg.locks[key] = lock
         }
-        wg.Done()
+        hg.mx.Unlock()
     }
-    wg.Wait()
-    hg.mx.Unlock()
-    hg.locks[key].Lock()
+
+    lock.Lock()
 
 }
 

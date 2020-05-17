@@ -5,11 +5,8 @@ import (
 )
 
 type PoolParty struct {
-    // Mutex is used when assigning functions to channels.
-    mx sync.Mutex
-
-    // WaitGroup is used to wait for the current tasks to finish.
-    wg sync.WaitGroup
+    pl sync.WaitGroup
+    cl sync.WaitGroup
 
     // The number of threads the PoolParty will use.
     max int
@@ -40,50 +37,45 @@ func NewPoolParty(threads int) *PoolParty {
 
 func(pp *PoolParty) start() {
 
-    loop := func(i int) {
-        for f := range pp.pool[i] {
-            f()
-            pp.wg.Done()
-        }
-    }
-
+    pp.cl.Add(len(pp.pool))
     for i := range pp.pool {
-        go loop(i)
+        go func(n int) {
+            for f := range pp.pool[n] {
+                f()
+                pp.pl.Done()
+            }
+            pp.cl.Done()
+        }(i)
     }
 
 }
 
 func(pp *PoolParty) Join(f func()) {
-
-    pp.mx.Lock()
-
-    mi := pp.minIndex()
-    pp.wg.Add(1)
-    pp.pool[mi] <- f
-
-    pp.mx.Unlock()
-
+    pp.pl.Add(1)
+    go func() {
+        mi := pp.minIndex()
+        pp.pool[mi] <- f
+    }()
 }
 
 func(pp *PoolParty) Wait() {
-    pp.wg.Wait()
+    pp.pl.Wait()
 }
 
 func(pp *PoolParty) Close() {
 
-    // Wait for every queue to end
     pp.Wait()
 
     for i := range pp.pool {
         close(pp.pool[i])
     }
 
+    pp.cl.Wait()
     pp.pool = nil
 
 }
 
 func(pp *PoolParty) minIndex() int {
-
     mi := 0
     for i := range pp.pool {
         if len(pp.pool[i]) < len(pp.pool[mi]) {
@@ -91,5 +83,4 @@ func(pp *PoolParty) minIndex() int {
         }
     }
     return mi
-
 }

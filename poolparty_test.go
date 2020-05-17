@@ -1,27 +1,26 @@
 package together
 
 import (
+    "runtime"
     "testing"
 )
 
-func do(pp *PoolParty, i int) {
-    pp.Join(func() {
-        i++
-    })
-}
-
-func BenchmarkPoolParty1(t *testing.B) {
-    pp := NewPoolParty(4)
-    for i := 0; i < 1000000; i++ {
-        do(pp, i)
+func BenchmarkPoolPartyCPU_0(b *testing.B) {
+    pp := NewPoolParty(runtime.NumCPU())
+    for i := 0; i < b.N; i++ {
+        pp.Join(func() {
+            _ = i
+        })
     }
     pp.Close()
 }
 
-func BenchmarkPoolParty2(t *testing.B) {
-    pp := NewPoolParty(2)
-    for i := 0; i < 1000000; i++ {
-        do(pp, i)
+func BenchmarkPoolPartyCPU_1(b *testing.B) {
+    pp := NewPoolParty(runtime.NumCPU() + 1)
+    for i := 0; i < b.N; i++ {
+        pp.Join(func() {
+            _ = i
+        })
     }
     pp.Close()
 }

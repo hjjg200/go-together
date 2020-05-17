@@ -29,6 +29,4 @@ func (ps *Passer) Pass() {
     }()
 }
 
-func (ps *Passer) SetInterval(i time.Duration) {
-    ps.i = i
-}
+// Deprecated SetInterval as it cannot affect the running timer
