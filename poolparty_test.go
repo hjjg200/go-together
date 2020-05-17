@@ -5,11 +5,11 @@ import (
     "testing"
 )
 
-func BenchmarkPoolPartyCPU_0(b *testing.B) {
-    pp := NewPoolParty(runtime.NumCPU())
-    for i := 0; i < b.N; i++ {
+func benchmarkPoolParty(cpu, bn int) {
+    pp := NewPoolParty(cpu)
+    for i := 0; i < bn; i++ {
         pp.Join(func() {
-            for x := 0; x < 100000; x++ {
+            for x := 0; x < 5000000; x++ {
                 _ = x
             }
         })
@@ -18,13 +18,13 @@ func BenchmarkPoolPartyCPU_0(b *testing.B) {
 }
 
 func BenchmarkPoolPartyCPU_1(b *testing.B) {
-    pp := NewPoolParty(runtime.NumCPU() + 1)
-    for i := 0; i < b.N; i++ {
-        pp.Join(func() {
-            for x := 0; x < 100000; x++ {
-                _ = x
-            }
-        })
-    }
-    pp.Close()
+    benchmarkPoolParty(1, b.N)
+}
+
+func BenchmarkPoolPartyCPU_plus0(b *testing.B) {
+    benchmarkPoolParty(runtime.NumCPU(), b.N)
+}
+
+func BenchmarkPoolPartyCPU_plus1(b *testing.B) {
+    benchmarkPoolParty(runtime.NumCPU() + 1, b.N)
 }
