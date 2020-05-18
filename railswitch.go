@@ -1,121 +1,93 @@
 package together
 
-import (
-    "fmt"
-    "sync"
-    "sync/atomic"
-)
-
-type rail struct {
-    at int
-    queue chan train
-    open int32
-}
 
 type train struct {
+    at int
     delta int
+    granted chan struct{}
 }
 
 type RailSwitch struct {
-    rails map[int] rail
-    queue chan rail
-
     at int
     value int
-    control sync.Mutex
-    register sync.Mutex
+    
+    buffered []*train
+    queue chan *train
+    open bool
 }
 
-/*
-
-Queue 
-    // queue has to create new queue when there is no queue for `at`
-    // queue has to just pass when current is at `at`
-    // queue has to stop when current is not at `at`
-    // queue should not use goroutine for sending as it should stop
-    // current has to receive in order to let pass
-
-Proceed
-    // proceed has to panic when it is not at `at`
-    // proceed has to deduct 1 from current queue
-
-*/
-
 func NewRailSwitch() *RailSwitch {
-
-    rs       := new(RailSwitch)
-    rs.rails  = make(map[int] rail)
-    rs.queue  = make(chan rail)
-    
-    rs.control.Lock()
+    rs := new(RailSwitch)
+    rs.buffered = make([]*train, 0)
+    rs.queue    = make(chan *train)
 
     go func() {
-        for r := range rs.queue {
+        Loop:
+        for {
 
-            at      := r.at
-            queue   := r.queue
-            rs.at    = at
-            rs.value = 0
+            buf := make([]*train, len(rs.buffered))
+            copy(buf, rs.buffered)
+            rs.buffered = make([]*train, 0)
 
-            rs.control.Unlock()
+            for _, t := range buf {
+                rs.register(t)
+                print(rs.open); print(t.at); print(" -b "); println(t.delta)
 
-            print(at); print(" = "); print(queue == nil); println("")
-            if queue == nil {
-                rs.control.Lock()
-                continue
+                if !rs.open { continue Loop }
             }
 
-            for t := range queue {
-                rs.value += t.delta
-                print(rs.at); print(" - "); print(rs.value); println("")
-                if rs.value == 0 {
-                    rs.control.Lock()
-                    atomic.CompareAndSwapInt32(&r.open, 1, 0)
-                    break
-                }
+            for t := range rs.queue {
+                rs.register(t)
+
+                print(rs.open); print(t.at); print(" -  "); println(t.delta)
+                if !rs.open { continue Loop }
             }
 
         }
     }()
 
     return rs
+}
 
+func bufferHelper(b []*train) {
+    for _, t :=range b {
+        print("B"); print(t.at); print("+"); println(t.delta)
+    }
+}
+
+func(rs *RailSwitch) register(t *train) {
+
+    if !rs.open {
+        rs.at = t.at
+        rs.open = true
+    }
+
+    if t.at == rs.at {
+        rs.value += t.delta
+        if rs.value == 0 {
+            rs.open = false
+        }
+        if t.granted != nil {
+            t.granted <- struct{}{}
+        }
+    } else {
+        rs.buffered = append(rs.buffered, t)
+    }
 }
 
 func(rs *RailSwitch) Queue(at, delta int) {
-
-    rs.register.Lock()
-    r, ok := rs.rails[at]
-
-    // Check for rail
-    if !ok {
-        q := make(chan train)
-        r := rail{at, q, 0}
-        rs.rails[at] = r
+    granted := make(chan struct{}, 1)
+    rs.queue <- &train{
+        at, delta, granted,
     }
-
-    rs.register.Unlock()
-
-    // Check for at
-    rs.control.Lock()
-    if closed := atomic.CompareAndSwapInt32(&r.open, 0, 1); closed {
-        go func() {
-            rs.queue <- r
-        }()
-    }
-    rs.control.Unlock()
-
-    r.queue <- train{delta}
-
+    <- granted
 }
 
 func(rs *RailSwitch) Proceed(at int) {
-    if rs.at != at {
-        panic(fmt.Sprintf("together: invalid proceed call for %d while it is at %d", at, rs.at))
-    }
-    rs.rails[at].queue <- train{-1}
+    rs.Queue(at, -1)
 }
 
 func(rs *RailSwitch) Wait() {
-    rs.queue <- rail{}
+    // add panic for at < 0
+    rs.Queue(-1, 0)
 }

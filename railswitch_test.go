@@ -58,6 +58,15 @@ func BenchmarkRailSwitch_12000(b *testing.B) {
     benchmarkRailSwitch(b.N, 12000)
 }
 
+var st time.Time
+func startTime() {
+    st = time.Now()
+}
+
+func timed() time.Duration {
+    return time.Now().Sub(st)
+}
+
 func TestRailSwitch1(t *testing.T) {
 
     const (
@@ -71,14 +80,15 @@ func TestRailSwitch1(t *testing.T) {
         a: "A", b: "B", c: "C",
     }
     sleep := func(s int) {
-        time.Sleep(time.Nanosecond * time.Duration(s))
+        time.Sleep(time.Millisecond * time.Duration(s))
     }
     do := func(p, s int) {
         sleep(s)
-        t.Logf("%s", n[p])
+        t.Logf("%v %s", timed(), n[p])
         rs.Proceed(p)
     }
 
+    startTime()
     // A
     go func() {
         rs.Queue(a, 3)
@@ -114,7 +124,7 @@ func TestRailSwitch1(t *testing.T) {
 
     sleep(10)
 
-    <- time.After(time.Nanosecond * 300)
+    <- time.After(time.Second * 1)
 
     rs.Wait()
 
