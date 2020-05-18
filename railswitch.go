@@ -3,20 +3,27 @@ package together
 import (
     "fmt"
     "sync"
+    "sync/atomic"
 )
 
 type rail struct {
     at int
-    queue chan int
+    queue chan train
+    open int32
+}
+
+type train struct {
+    delta int
 }
 
 type RailSwitch struct {
+    rails map[int] rail
+    queue chan rail
+
     at int
     value int
-    mu sync.Mutex
-
-    rails  chan rail
-    queues map[int] chan int
+    control sync.Mutex
+    register sync.Mutex
 }
 
 /*
@@ -36,27 +43,35 @@ Proceed
 
 func NewRailSwitch() *RailSwitch {
 
-    rs        := new(RailSwitch)
-    rs.rails   = make(chan rail)
-    rs.queues  = make(map[int] chan int)
+    rs       := new(RailSwitch)
+    rs.rails  = make(map[int] rail)
+    rs.queue  = make(chan rail)
+    
+    rs.control.Lock()
 
     go func() {
-        for c := range rs.rails {
+        for r := range rs.queue {
 
-            at      := c.at
-            queue   := c.queue
-            if queue == nil {
-                continue
-            }
-
+            at      := r.at
+            queue   := r.queue
             rs.at    = at
             rs.value = 0
 
-            for c := range queue {
-                rs.value += c
+            rs.control.Unlock()
+
+            print(at); print(" = "); print(queue == nil); println("")
+            if queue == nil {
+                rs.control.Lock()
+                continue
+            }
+
+            for t := range queue {
+                rs.value += t.delta
+                print(rs.at); print(" - "); print(rs.value); println("")
                 if rs.value == 0 {
-                    close(queue)
-                    delete(rs.queues, at)
+                    rs.control.Lock()
+                    atomic.CompareAndSwapInt32(&r.open, 1, 0)
+                    break
                 }
             }
 
@@ -69,21 +84,28 @@ func NewRailSwitch() *RailSwitch {
 
 func(rs *RailSwitch) Queue(at, delta int) {
 
-    queue, ok := rs.queues[at]
+    rs.register.Lock()
+    r, ok := rs.rails[at]
+
+    // Check for rail
     if !ok {
-        rs.mu.Lock()
-        _, ok = rs.queues[at]
-        if !ok {
-            queue = make(chan int)
-            rs.queues[at] = queue
-            go func() {
-                rs.rails <- rail{at, queue}
-            }()
-        }
-        rs.mu.Unlock()
+        q := make(chan train)
+        r := rail{at, q, 0}
+        rs.rails[at] = r
     }
 
-    queue <- delta
+    rs.register.Unlock()
+
+    // Check for at
+    rs.control.Lock()
+    if closed := atomic.CompareAndSwapInt32(&r.open, 0, 1); closed {
+        go func() {
+            rs.queue <- r
+        }()
+    }
+    rs.control.Unlock()
+
+    r.queue <- train{delta}
 
 }
 
@@ -91,9 +113,9 @@ func(rs *RailSwitch) Proceed(at int) {
     if rs.at != at {
         panic(fmt.Sprintf("together: invalid proceed call for %d while it is at %d", at, rs.at))
     }
-    rs.queues[at] <- -1
+    rs.rails[at].queue <- train{-1}
 }
 
 func(rs *RailSwitch) Wait() {
-    rs.rails <- rail{}
+    rs.queue <- rail{}
 }
