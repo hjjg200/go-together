@@ -55,7 +55,7 @@ func(d *Door) Knock() {
 // Change running timer
 // Hang if interval is being changed
 
-func(d *Door) SetInterval(i time.Duration) {
+func(d *Door) Set(i time.Duration) {
 
     d.m.Lock()
     if d.i == i {

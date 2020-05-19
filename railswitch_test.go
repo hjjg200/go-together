@@ -76,19 +76,18 @@ func TestRailSwitch1(t *testing.T) {
     )
 
     rs := NewRailSwitch()
+
     n  := map[int] string {
         a: "A", b: "B", c: "C",
     }
-    sleep := func(s int) {
-        time.Sleep(time.Millisecond * time.Duration(s))
-    }
     do := func(p, s int) {
-        sleep(s)
-        fmt.Printf("%v %s\n", timed(), n[p])
+        t_sleep(s)
+        t_time(n[p])
         rs.Proceed(p)
     }
 
-    startTime()
+    t_reset()
+
     // A
     go func() {
         rs.Queue(a, 3)
@@ -104,7 +103,7 @@ func TestRailSwitch1(t *testing.T) {
         do(a, 10)
     }()
 
-    sleep(10)
+    t_sleep(10)
 
     // B
     go func() {
@@ -119,7 +118,7 @@ func TestRailSwitch1(t *testing.T) {
         do(b, 10)
     }()
 
-    sleep(10)
+    t_sleep(10)
     
     // C
     go func() {
@@ -135,7 +134,7 @@ func TestRailSwitch1(t *testing.T) {
         do(c, 10)
     }()
 
-    sleep(300)
+    t_sleep(300)
 
     rs.Close()
 
@@ -145,23 +144,18 @@ func TestRailSwitch2(t *testing.T) {
 
     rs := NewRailSwitch()
 
-    sleep := func(r int) {
-        for i := 0; i < r; i++ {
-            time.Sleep(time.Nanosecond)
-        }
-    }
     pr := func(at, i int) {
         fmt.Printf("%c%d,", at + 'a', i)
     }
     do := func(at int) {
         pr(at, 1)
-        sleep(1)
+        t_sleep(1)
         pr(at, 2)
-        sleep(1)
+        t_sleep(1)
         pr(at, 3)
-        sleep(1)
+        t_sleep(1)
         pr(at, 4)
-        sleep(1)
+        t_sleep(1)
         rs.Proceed(at)
     }
     repeat := func(at, c int) {
@@ -187,25 +181,25 @@ func TestRailSwitch2(t *testing.T) {
 
     go func() {
         repeat(0, 3)
-        sleep(2)
+        t_sleep(2)
         repeat(0, 3)
-        sleep(5)
+        t_sleep(5)
         repeat(0, 3)
     }()
-    sleep(1)
+    t_sleep(1)
     go func() {
         repeat(1, 3)
-        sleep(7)
+        t_sleep(7)
         repeat(1, 3)
-        sleep(2)
+        t_sleep(2)
         repeat(1, 3)
     }()
-    sleep(1)
+    t_sleep(1)
     go func() {
         repeat(2, 3)
-        sleep(1)
+        t_sleep(1)
         repeat(2, 3)
-        sleep(7)
+        t_sleep(7)
         repeat(2, 3)
     }()
 

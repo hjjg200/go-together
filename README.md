@@ -1,122 +1,192 @@
 # package together
 
-**Unstable prototype**
-
 ```go
 import "github.com/hjjg200/go/together"
 ```
 
-Package together provides helpful features for concurrent programming.
+Package together provides concurrent utilities. It is currently in its beta stage and there might be bugs.
 
 ## Index
 
 * [Constants](#pkg-constants)
 * [Variables](#pkg-variables)
-* [func NumCPU() int](#NumCPU)
-* [type HoldGroup](#HoldGroup)
-    * [func NewHoldGroup() *HoldGroup](#NewHoldGroup)
-    * [func ( hg *HoldGroup ) HoldAt( key interface{} )](#HoldGroup.HoldAt)
-    * [func ( hg *HoldGroup ) UnholdAt( key interface{} )](#HoldGroup.UnholdAt)
-* [type HoldSwitch](#HoldSwitch)
-    * [func NewHoldSwitch() *HoldSwitch](#NewHoldSwitch)
-    * [func ( hs *HoldSwitch ) AddA( delta int )](#HoldSwitch.AddA)
-    * [func ( hs *HoldSwitch ) AddB( delta int )](#HoldSwitch.AddB)
-    * [func ( hs *HoldSwitch ) DoneA()](#HoldSwitch.DoneA)
-    * [func ( hs *HoldSwitch ) DoneB()](#HoldSwitch.DoneB)
-* [type PoolParty](#PoolParty)
-    * [func NewPoolParty( threads int ) ( *PoolParty, error )](#NewPoolParty)
-    * [func ( pp *PoolParty ) Join( f func() )](#PoolParty.Join)
-    * [func ( pp *PoolParty ) Wait()](#PoolParty.Wait)
-    * [func ( pp *PoolParty ) Close()](#PoolParty.Close)
+* [type LockerRoom](#LockerRoom)
+    * [func NewLockerRoom() *LockerRoom](#NewLockerRoom)
+    * [func(lr *LockerRoom) Lock(key interface{})](#LockerRoom.Lock)
+    * [func(lr *LockerRoom) Unlock(key interface{})](#LockerRoom.Unlock)
+* [type RailSwitch](#RailSwitch)
+    * [func NewRailSwitch() *RailSwitch](#NewRailSwitch)
+    * [func(rs *RailSwitch) Queue(at, delta int) bool](#RailSwitch.Queue)
+    * [func(rs *RailSwitch) Proceed(at int)](#RailSwitch.Proceed)
+    * [func(rs *RailSwitch) OnStart(at int, t func())](#RailSwitch.OnStart)
+    * [func(rs *RailSwitch) OnEnd(at int, t func())](#RailSwitch.OnEnd)
+    * [func(rs *RailSwitch) Close() error](#RailSwitch.Close)
+* [type Door](#Door)
+    * [func NewDoor(i time.Duration) *Door](#NewDoor)
+    * [func(d *Door) Knock()](#Door.Knock)
+    * [func(d *Door) Set(i time.Duration)](#Door.Set)
+
+
+## <a name="pkg-variables" href="#pkg-constants">Constants</a>
+
+```go
+const (
+)
+```
 
 ## <a name="pkg-variables" href="#pkg-variables">Variables</a>
 
 ```go
 var (
-    ErrThreadCount = errors.New( "together: the given thread count is invalid. The thread count is set to 1." )
 )
 ```
 
-## <a name="NumCPU" href="#NumCPU">func NumCPU</a>
+## <a name="LockerRoom">type LockerRoom</a>
 
 ```go
-func NumCPU() int
-```
-
-Returns `runtime.NumCPU`.
-
-## <a name="HoldGroup" href="#HoldGroup">type HoldGroup</a>
-
-```go
-type HoldGroup struct {
-    // no exported members
+type LockerRoom struct {
+    // contains filtered or unexported fields
 }
 ```
 
-HoldGroup is a type that can be used as a collective mutex group.
+LockerRoom is a collective mutex group.
 
-### <a name="NewHoldGroup" href="#NewHoldGroup">func NewHoldGroup</a>
+### <a name="NewLockerRoom">func NewLockerRoom</a>
 
 ```go
-func NewHoldGroup() *HoldGroup
+func NewLockerRoom() *LockerRoom
 ```
 
-Returns a new HoldGroup.
+Returns a new LockerRoom.
 
-### <a name="HoldGroup.HoldAt" href="#HoldGroup.HoldAt">func ( *HoldGroup ) HoldAt</a>
+### <a name="LockerRoom.HoldAt">func(*LockerRoom) Lock</a>
 
 ```go
-func ( hg *HoldGroup ) HoldAt( key interface{} )
+func(lr *LockerRoom) Lock(key interface{})
 ```
 
-Locks the mutex of the given key.
+Locks the mutex of the given key. If it is the first time to lock the key, the LockerRoom assigns a mutex to the relevant map according to the type of the key. `int`, `uint`, `int64`, and `uint64` are assigned to `map[int64] *sync.Mutex`; `string` is assigned to `map[string]`; pointers such as `*int` and `*struct{}` are assigned to `map[uintptr]`; the others are all assigned to `map[interface{}]`. A LockerRoom has separate maps for increased performance.
 
-### <a name="HoldGroup.UnholdAt" href="#HoldGroup.UnholdAt">func ( *HoldGroup ) UnholdAt</a>
+### <a name="LockerRoom.Unlock">func(*LockerRoom) Unlock</a>
 
 ```go
-func ( hg *HoldGroup ) UnholdAt( key interface{} )
+func(lr *LockerRoom) Unlock(key interface{})
 ```
 
-Unlocks the mutex of the given key.
+Attempts to unlock the mutex of the given key.
 
-## <a name="PoolParty" href="#PoolParty">type PoolParty</a>
+
+## <a name="RailSwitch">type RailSwitch</a>
 
 ```go
-type PoolParty struct {
-    // no exported members
+type RailSwitch struct {
+    // contains filtered or unexported fields
 }
 ```
 
-PoolParty processes the given queues in number of goroutines. It assigns new queues to the pool that has the least queues. Future plan is to make it assign new queues to the pool that finishes the job.
+Like a rail switch that allows only one rail to proceed, RailSwitch allows only one group to operate while others are waiting for their turn. Turn is determined on first come, first served basis; the goroutine that called `RailSwitch.Queue` first will receive the next turn.
 
-### <a name="NewPoolParty" href="#NewPoolParty">func NewPoolParty</a>
-
-```go
-func NewPoolParty( threads int ) *PoolParty
-```
-
-Creates a new PoolParty. It starts a loop that loops through the channels. Use NumCPU to use as many threads as there are. Panics if the given thread count is below 1.
-
-### <a name="PoolParty.Join" href="#PoolParty.Join">func ( *PoolParty ) Join</a>
+### <a name="NewRailSwitch">func NewRailSwitch</a>
 
 ```go
-func ( pp *PoolParty ) Join( f func() )
+func NewRailSwitch() *RailSwitch
 ```
 
-Put f into the channel that has least queues.
+Creates a new RailSwitch. You need to assign triggers before calling `RailSwitch.Queue` in order to ensure they are triggered at the first call for queue.
 
-### <a nane="PoolParty.Wait" href="#PoolParty.Wait">func ( *PoolParty ) Wait</a>
+### <a name="RailSwitch.Queue">func(*RailSwitch) Queue</a>
 
 ```go
-func ( pp *PoolParty ) Wait()
+func(rs *RailSwitch) Queue(at, delta int) bool
 ```
 
-Wait until all the tasks to be finishied.
-
-### <a name="PoolParty.Close" href="#PoolParty.Close">func ( *PoolParty ) Close</a>
+Queue hangs until its group gains turn and returns true if the group successfully gained turn and false if the RailSwitch was closed. Therefore, you need to wrap it with a if block for proper use.
 
 ```go
-func ( pp *PoolParty ) Close()
+if rs.Queue(groupCleanup, 1) {
+    // Successfully gained turn
+}
+// Failed to gain turn
 ```
 
-Waits for the PoolParty to finish all the queues and closes the channels.
+### <a name="RailSwitch.Proceed">func(*RailSwitch) Proceed</a>
+
+```go
+func(rs *RailSwitch) Proceed(at int)
+```
+
+Proceed notifies the RailSwitch one of the group has completed its task. And when the value -- figuratively, the number of remaining trains -- of the current "rail" reaches 0, the RailSwitch gives turn to the awaiting group.
+
+### <a name="RailSwitch.OnStart">func(*RailSwitch) OnStart</a>
+
+```go
+func(rs *RailSwitch) OnStart(at int, t func())
+```
+
+OnStart is used to set trigger for a certain group. The trigger is guaranteed to start and complete prior to the first operation of that group.
+
+### <a name="RailSwitch.OnEnd">func(*RailSwitch) OnEnd<//a>
+
+```go
+func(rs *RailSwitch) OnEnd(at int, t func())
+```
+
+OnEnd is used to set trigger for a certain group. The trigger is guaranteed to start and complete right after the last operation of the group and prior to the start trigger and the first operation of the next group.
+
+### <a name="RailSwitch.Close">func(*RailSwitch) Close</a>
+
+```go
+func(rs *RailSwitch) Close() error
+```
+
+Close gracefully closes the RailSwitch. It waits for the "trains" and "trails" that were already queued for operating, and once they are done, it closes underlying channels and internal goroutines of RailSwitch and blocks the trains and rails came after the call for Close and blocks any consecutive train.
+
+It returns an error if it is already closed.
+
+
+## <a name="Door">type Door</a>
+
+```go
+type Door struct {
+    // contains filtered or unexported fields
+}
+```
+
+Door is similar to `time.Ticker` but defers from it in that it does not delay the first call and that you can change the interval for running timer unlike `time.Ticker.Reset`.
+
+    * [func NewDoor(i time.Duration) *Door](#NewDoor)
+    * [func(d *Door) Knock()](#Door.Knock)
+    * [func(d *Door) Set(i time.Duration)](#Door.Set)
+
+### <a name="NewDoor">func NewDoor</a>
+
+```go
+func NewDoor(i time.Duration) *Door
+```
+
+Creates a door for the given duration.
+
+### <a name="Door.Knock">func(*Door) Knock</a>
+
+```go
+func(d *Door) Knock()
+```
+
+Knock does not hang if it is the first call and if it has passed interval amount of time since its last call. It hangs if it has not passed interval amount of time since its last call.
+
+### <a name="Door.Set">
+
+```go
+func(d *Door) Set(i time.Duration)
+```
+
+Set sets a new duration for the Door. It replaces the timer that Knock may be waiting for. And it hangs if there is any duration change ongoing. Therefore, it is highly likely to create a deadlock if it is called twice in the same goroutine.
+
+```go
+d := NewDoor(time.Second * 1)
+for i := 0; i < 5; i++ {
+    d.Knock()
+    fmt.Println("!")
+    d.Set(time.Second * i)
+}
+```

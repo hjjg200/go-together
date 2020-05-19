@@ -48,9 +48,13 @@ func NewRailSwitch() *RailSwitch {
         rs.at = <- rs.cat
 
         for t := range rs.ctrain {
+
             rs.value += t.delta
+
             if rs.value == 0 {
+
                 if rs.at == -1 {
+                    // Close
                     t.mid <- struct{}{}
                     return
                 }
@@ -59,7 +63,13 @@ func NewRailSwitch() *RailSwitch {
                 if end := rs.edtg[rs.at]; end != nil { end() }
 
                 rs.at = <- rs.cat
+
             }
+
+            if rs.value < 0 {
+                panic("together: RailSwitch's value must not be below 0")
+            }
+
             t.mid <- struct{}{}
         }
 

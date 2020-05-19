@@ -1,83 +1,105 @@
 package together
 
 import (
-    "fmt"
     "testing"
     "time"
 )
 
 func TestDoor1(t *testing.T) {
 
-    st := time.Now()
-    log := func() {
-        fmt.Printf("%v\n", time.Now().Sub(st))
-    }
+    t_reset()
 
     d := NewDoor(time.Millisecond * 60)
 
     d.Knock()
-    log()
+    t_time()
 
     d.Knock()
-    log()
+    t_time()
 
-    d.SetInterval(time.Millisecond * 20)
-
-    d.Knock()
-    log()
+    d.Set(time.Millisecond * 20)
 
     d.Knock()
-    log()
+    t_time()
+
+    d.Knock()
+    t_time()
 
     go func() {
-        d.SetInterval(time.Millisecond * 40)
-        d.SetInterval(time.Millisecond * 20)
-        d.SetInterval(time.Millisecond * 60)
+        d.Set(time.Millisecond * 40)
+        d.Set(time.Millisecond * 20)
+        d.Set(time.Millisecond * 60)
     }()
 
     d.Knock()
-    log()
+    t_time()
     
     d.Knock()
-    log()
+    t_time()
 
     d.Knock()
-    log()
+    t_time()
     
     d.Knock()
-    log()
+    t_time()
 
 }
 
 func TestDoor2(t *testing.T) {
-    st := time.Now()
-    log := func() {
-        fmt.Printf("%v\n", time.Now().Sub(st))
-    }
+    
+    t_reset()
 
     d := NewDoor(time.Millisecond * 60)
 
     go func() {
         d2 := NewDoor(time.Millisecond * 20)
         d2.Knock()
-        d.SetInterval(time.Millisecond * 30)
+        d.Set(time.Millisecond * 30)
         d2.Knock()
-        d.SetInterval(time.Millisecond * 20)
+        d.Set(time.Millisecond * 20)
         d2.Knock()
-        d.SetInterval(time.Millisecond * 50)
+        d.Set(time.Millisecond * 50)
         d2.Knock()
-        d.SetInterval(time.Millisecond * 20)
+        d.Set(time.Millisecond * 20)
     }()
 
     d.Knock()
-    log()
+    t_time()
     d.Knock()
-    log()
+    t_time()
     d.Knock()
-    log()
+    t_time()
     d.Knock()
-    log()
+    t_time()
     d.Knock()
-    log()
+    t_time()
+
+}
+
+func TestDoor3(t *testing.T) {
+
+    t_reset()
+    
+    d := NewDoor(time.Millisecond * 60)
+
+    go func() {
+        d.Set(time.Millisecond * 50)
+        d.Set(time.Millisecond * 30)
+        d.Set(time.Millisecond * 20)
+        d.Set(time.Millisecond * 10)
+    }()
+    
+    d.Knock()
+    t_time()
+    d.Knock()
+    t_time()
+    d.Knock()
+    t_time()
+    d.Knock()
+    t_time()
+    d.Knock()
+    t_time()
+    d.Knock()
+    t_time()
 
 }
