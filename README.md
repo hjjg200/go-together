@@ -27,21 +27,21 @@ Package together provides concurrent utilities. It is currently in its beta stag
     * [func(d *Door) Set(i time.Duration)](#Door.Set)
 
 
-## <a name="pkg-variables" href="#pkg-constants">Constants</a>
+## <a name="pkg-variables" href="#">Constants</a>
 
 ```go
 const (
 )
 ```
 
-## <a name="pkg-variables" href="#pkg-variables">Variables</a>
+## <a name="pkg-variables" href="#">Variables</a>
 
 ```go
 var (
 )
 ```
 
-## <a name="LockerRoom">type LockerRoom</a>
+## <a name="LockerRoom" href="#">type LockerRoom</a>
 
 ```go
 type LockerRoom struct {
@@ -51,7 +51,7 @@ type LockerRoom struct {
 
 LockerRoom is a collective mutex group.
 
-### <a name="NewLockerRoom">func NewLockerRoom</a>
+### <a name="NewLockerRoom" href="#">func NewLockerRoom</a>
 
 ```go
 func NewLockerRoom() *LockerRoom
@@ -59,7 +59,7 @@ func NewLockerRoom() *LockerRoom
 
 Returns a new LockerRoom.
 
-### <a name="LockerRoom.HoldAt">func(*LockerRoom) Lock</a>
+### <a name="LockerRoom.HoldAt" href="#">func(*LockerRoom) Lock</a>
 
 ```go
 func(lr *LockerRoom) Lock(key interface{})
@@ -67,7 +67,7 @@ func(lr *LockerRoom) Lock(key interface{})
 
 Locks the mutex of the given key. If it is the first time to lock the key, the LockerRoom assigns a mutex to the relevant map according to the type of the key. `int`, `uint`, `int64`, and `uint64` are assigned to `map[int64] *sync.Mutex`; `string` is assigned to `map[string]`; pointers such as `*int` and `*struct{}` are assigned to `map[uintptr]`; the others are all assigned to `map[interface{}]`. A LockerRoom has separate maps for increased performance.
 
-### <a name="LockerRoom.Unlock">func(*LockerRoom) Unlock</a>
+### <a name="LockerRoom.Unlock" href="#">func(*LockerRoom) Unlock</a>
 
 ```go
 func(lr *LockerRoom) Unlock(key interface{})
@@ -76,7 +76,7 @@ func(lr *LockerRoom) Unlock(key interface{})
 Attempts to unlock the mutex of the given key.
 
 
-## <a name="RailSwitch">type RailSwitch</a>
+## <a name="RailSwitch" href="#">type RailSwitch</a>
 
 ```go
 type RailSwitch struct {
@@ -86,7 +86,7 @@ type RailSwitch struct {
 
 Like a rail switch that allows only one rail to proceed, RailSwitch allows only one group to operate while others are waiting for their turn. Turn is determined on first come, first served basis; the goroutine that called `RailSwitch.Queue` first will receive the next turn.
 
-### <a name="NewRailSwitch">func NewRailSwitch</a>
+### <a name="NewRailSwitch" href="#">func NewRailSwitch</a>
 
 ```go
 func NewRailSwitch() *RailSwitch
@@ -94,7 +94,7 @@ func NewRailSwitch() *RailSwitch
 
 Creates a new RailSwitch. You need to assign triggers before calling `RailSwitch.Queue` in order to ensure they are triggered at the first call for queue.
 
-### <a name="RailSwitch.Queue">func(*RailSwitch) Queue</a>
+### <a name="RailSwitch.Queue" href="#">func(*RailSwitch) Queue</a>
 
 ```go
 func(rs *RailSwitch) Queue(at, delta int) bool
@@ -109,7 +109,7 @@ if rs.Queue(groupCleanup, 1) {
 // Failed to gain turn
 ```
 
-### <a name="RailSwitch.Proceed">func(*RailSwitch) Proceed</a>
+### <a name="RailSwitch.Proceed" href="#">func(*RailSwitch) Proceed</a>
 
 ```go
 func(rs *RailSwitch) Proceed(at int)
@@ -117,7 +117,7 @@ func(rs *RailSwitch) Proceed(at int)
 
 Proceed notifies the RailSwitch one of the group has completed its task. And when the value -- figuratively, the number of remaining trains -- of the current "rail" reaches 0, the RailSwitch gives turn to the awaiting group.
 
-### <a name="RailSwitch.OnStart">func(*RailSwitch) OnStart</a>
+### <a name="RailSwitch.OnStart" href="#">func(*RailSwitch) OnStart</a>
 
 ```go
 func(rs *RailSwitch) OnStart(at int, t func())
@@ -125,7 +125,7 @@ func(rs *RailSwitch) OnStart(at int, t func())
 
 OnStart is used to set trigger for a certain group. The trigger is guaranteed to start and complete prior to the first operation of that group.
 
-### <a name="RailSwitch.OnEnd">func(*RailSwitch) OnEnd<//a>
+### <a name="RailSwitch.OnEnd" href="#">func(*RailSwitch) OnEnd<//a>
 
 ```go
 func(rs *RailSwitch) OnEnd(at int, t func())
@@ -133,7 +133,7 @@ func(rs *RailSwitch) OnEnd(at int, t func())
 
 OnEnd is used to set trigger for a certain group. The trigger is guaranteed to start and complete right after the last operation of the group and prior to the start trigger and the first operation of the next group.
 
-### <a name="RailSwitch.Close">func(*RailSwitch) Close</a>
+### <a name="RailSwitch.Close" href="#">func(*RailSwitch) Close</a>
 
 ```go
 func(rs *RailSwitch) Close() error
@@ -144,7 +144,7 @@ Close gracefully closes the RailSwitch. It waits for the "trains" and "trails" t
 It returns an error if it is already closed.
 
 
-## <a name="Door">type Door</a>
+## <a name="Door" href="#">type Door</a>
 
 ```go
 type Door struct {
@@ -158,7 +158,7 @@ Door is similar to `time.Ticker` but defers from it in that it does not delay th
     * [func(d *Door) Knock()](#Door.Knock)
     * [func(d *Door) Set(i time.Duration)](#Door.Set)
 
-### <a name="NewDoor">func NewDoor</a>
+### <a name="NewDoor" href="#">func NewDoor</a>
 
 ```go
 func NewDoor(i time.Duration) *Door
@@ -166,7 +166,7 @@ func NewDoor(i time.Duration) *Door
 
 Creates a door for the given duration.
 
-### <a name="Door.Knock">func(*Door) Knock</a>
+### <a name="Door.Knock" href="#">func(*Door) Knock</a>
 
 ```go
 func(d *Door) Knock()
@@ -174,7 +174,7 @@ func(d *Door) Knock()
 
 Knock does not hang if it is the first call and if it has passed interval amount of time since its last call. It hangs if it has not passed interval amount of time since its last call.
 
-### <a name="Door.Set">
+### <a name="Door.Set" href="#">
 
 ```go
 func(d *Door) Set(i time.Duration)
