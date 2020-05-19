@@ -125,7 +125,7 @@ func(rs *RailSwitch) OnStart(at int, t func())
 
 OnStart is used to set trigger for a certain group. The trigger is guaranteed to start and complete prior to the first operation of that group.
 
-### <a name="RailSwitch.OnEnd" href="#">func(*RailSwitch) OnEnd<//a>
+### <a name="RailSwitch.OnEnd" href="#">func(*RailSwitch) OnEnd</a>
 
 ```go
 func(rs *RailSwitch) OnEnd(at int, t func())
@@ -174,7 +174,7 @@ func(d *Door) Knock()
 
 Knock does not hang if it is the first call and if it has passed interval amount of time since its last call. It hangs if it has not passed interval amount of time since its last call.
 
-### <a name="Door.Set" href="#">
+### <a name="Door.Set" href="#">func(*Door) Set</a>
 
 ```go
 func(d *Door) Set(i time.Duration)
