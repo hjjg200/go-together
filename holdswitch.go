@@ -95,8 +95,6 @@ func(hs *HoldSwitch) loop() {
 
     for w := range hs.queue {
 
-        hs.mx.Lock()
-
         // Main
         do(w)
 
@@ -118,8 +116,6 @@ func(hs *HoldSwitch) loop() {
                 hs.closer = nil
             }
         }
-
-        hs.mx.Unlock()
 
     }
 

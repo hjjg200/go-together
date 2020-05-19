@@ -1,61 +1,37 @@
 package together
 
 import (
+    "fmt"
     "testing"
     "time"
+    "sync"
 )
 
 
 func benchmarkRailSwitch(bn, sz int) {
     for i := 0; i < bn; i++ {
         rs := NewRailSwitch()
+        wg := sync.WaitGroup{}
+        wg.Add(sz)
         for j := 0; j < sz; j++ {
             go func(x int) {
                 rs.Queue(x, 1)
+                wg.Done()
                 _ = x
                 rs.Proceed(x)
             }(j)
         }
-        rs.Wait()
+        wg.Wait()
+        rs.Close()
     }
 }
 
 
+func BenchmarkRailSwitch_5(b *testing.B) {
+    benchmarkRailSwitch(b.N, 5)
+}
 func BenchmarkRailSwitch_20(b *testing.B) {
     benchmarkRailSwitch(b.N, 20)
-}
-func BenchmarkRailSwitch_30(b *testing.B) {
-    benchmarkRailSwitch(b.N, 30)
-}
-func BenchmarkRailSwitch_50(b *testing.B) {
-    benchmarkRailSwitch(b.N, 50)
-}
-func BenchmarkRailSwitch_100(b *testing.B) {
-    benchmarkRailSwitch(b.N, 100)
-}
-func BenchmarkRailSwitch_200(b *testing.B) {
-    benchmarkRailSwitch(b.N, 200)
-}
-func BenchmarkRailSwitch_300(b *testing.B) {
-    benchmarkRailSwitch(b.N, 300)
-}
-func BenchmarkRailSwitch_500(b *testing.B) {
-    benchmarkRailSwitch(b.N, 500)
-}
-func BenchmarkRailSwitch_1000(b *testing.B) {
-    benchmarkRailSwitch(b.N, 1000)
-}
-func BenchmarkRailSwitch_2000(b *testing.B) {
-    benchmarkRailSwitch(b.N, 2000)
-}
-func BenchmarkRailSwitch_5000(b *testing.B) {
-    benchmarkRailSwitch(b.N, 5000)
-}
-func BenchmarkRailSwitch_10000(b *testing.B) {
-    benchmarkRailSwitch(b.N, 10000)
-}
-func BenchmarkRailSwitch_12000(b *testing.B) {
-    benchmarkRailSwitch(b.N, 12000)
 }
 
 var st time.Time
@@ -84,7 +60,7 @@ func TestRailSwitch1(t *testing.T) {
     }
     do := func(p, s int) {
         sleep(s)
-        t.Logf("%v %s", timed(), n[p])
+        fmt.Printf("%v %s\n", timed(), n[p])
         rs.Proceed(p)
     }
 
@@ -95,7 +71,9 @@ func TestRailSwitch1(t *testing.T) {
         do(a, 10)
         do(a, 10)
         do(a, 10)
-        rs.Queue(a, 2)
+        rs.Queue(a, 4)
+        do(a, 10)
+        do(a, 10)
         do(a, 10)
         do(a, 10)
     }()
@@ -122,10 +100,8 @@ func TestRailSwitch1(t *testing.T) {
         do(c, 10)
     }()
 
-    sleep(10)
+    sleep(300)
 
-    <- time.After(time.Second * 1)
-
-    rs.Wait()
+    rs.Close()
 
 }

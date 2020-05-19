@@ -1,93 +1,119 @@
 package together
 
+import (
+    "sync"
+)
 
 type train struct {
-    at int
     delta int
     granted chan struct{}
+    c1 chan struct{}
+}
+
+type rail struct {
+    at int
+    queue chan *train
 }
 
 type RailSwitch struct {
     at int
     value int
     
-    buffered []*train
-    queue chan *train
-    open bool
+    rails map[int] *rail
+    
+    ctrain chan *train
+    cat chan int
+    queued map[int] bool
+    mu sync.Mutex
+    rg sync.Mutex
+    closed bool
+    closer chan struct{}
 }
 
 func NewRailSwitch() *RailSwitch {
     rs := new(RailSwitch)
-    rs.buffered = make([]*train, 0)
-    rs.queue    = make(chan *train)
+    rs.rails = make(map[int] *rail)
+    rs.ctrain = make(chan *train)
+    rs.cat = make(chan int)
+    rs.at = -1
+    rs.queued = make(map[int] bool)
 
     go func() {
-        Loop:
-        for {
-
-            buf := make([]*train, len(rs.buffered))
-            copy(buf, rs.buffered)
-            rs.buffered = make([]*train, 0)
-
-            for _, t := range buf {
-                rs.register(t)
-                print(rs.open); print(t.at); print(" -b "); println(t.delta)
-
-                if !rs.open { continue Loop }
+        rs.at = <- rs.cat
+        for t := range rs.ctrain {
+            rs.value += t.delta
+            if rs.value == 0 {
+                if rs.at == -1 {
+                    t.c1 <- struct{}{}
+                    break
+                }
+                rs.at = <- rs.cat
             }
-
-            for t := range rs.queue {
-                rs.register(t)
-
-                print(rs.open); print(t.at); print(" -  "); println(t.delta)
-                if !rs.open { continue Loop }
-            }
-
+            t.c1 <- struct{}{}
         }
     }()
 
     return rs
 }
 
-func bufferHelper(b []*train) {
-    for _, t :=range b {
-        print("B"); print(t.at); print("+"); println(t.delta)
-    }
-}
+func(rs *RailSwitch) Queue(at, delta int) bool {
 
-func(rs *RailSwitch) register(t *train) {
-
-    if !rs.open {
-        rs.at = t.at
-        rs.open = true
+    rs.rg.Lock()
+    if rs.closed && delta > 0 {
+        rs.rg.Unlock()
+        return false
     }
 
-    if t.at == rs.at {
-        rs.value += t.delta
-        if rs.value == 0 {
-            rs.open = false
-        }
-        if t.granted != nil {
-            t.granted <- struct{}{}
-        }
-    } else {
-        rs.buffered = append(rs.buffered, t)
-    }
-}
+    r, ok := rs.rails[at]
+    if !ok {
+        queue := make(chan *train)
+        r = &rail{at, queue}
 
-func(rs *RailSwitch) Queue(at, delta int) {
+        rs.rails[at] = r
+        rs.queued[at] = false
+        go func() {
+            for t := range queue {
+                if rs.at != r.at && !rs.queued[r.at] {
+                    rs.queued[r.at] = true
+                    rs.cat <- r.at
+                    rs.queued[r.at] = false
+                }
+                rs.ctrain <- t
+                <- t.c1
+                t.granted <- struct{}{}
+            }
+        }()
+    }
+    rs.rg.Unlock()
+
     granted := make(chan struct{}, 1)
-    rs.queue <- &train{
-        at, delta, granted,
+    c1 := make(chan struct{}, 1)
+    r.queue <- &train{
+        delta, granted, c1,
     }
     <- granted
+    return true
+
 }
 
 func(rs *RailSwitch) Proceed(at int) {
     rs.Queue(at, -1)
 }
 
-func(rs *RailSwitch) Wait() {
-    // add panic for at < 0
+func(rs *RailSwitch) Close() {
+    rs.rg.Lock()
+    rs.closed = true
+    rs.rg.Unlock()
+
     rs.Queue(-1, 0)
+
+    close(rs.cat)
+    close(rs.ctrain)
+    rs.cat = nil
+    rs.ctrain = nil
+    for _, r := range rs.rails {
+        close(r.queue)
+    }
+    rs.rails = nil
+    rs.queued = nil
 }
