@@ -17,10 +17,10 @@ func NewDoor(i time.Duration) *Door {
     d := &Door{}
     d.c = make(chan struct{})
     d.i = i
-    d.l = time.Now()
     
     go func() {
         d.c <- struct{}{}
+        d.l = time.Now()
     }()
 
     return d
@@ -44,6 +44,7 @@ func(d *Door) Knock() {
         // Ensure unchanged
         if d.i == i && d.l == l {
             d.c <- struct{}{}
+            println("A")
             d.l = time.Now()
         }
         d.m.Unlock()
@@ -78,6 +79,7 @@ func(d *Door) Set(i time.Duration) {
     if past >= i {
         go func() {
             d.c <- struct{}{}
+            println("B")
             d.l = time.Now()
             d.m.Unlock()
         }()
@@ -90,6 +92,7 @@ func(d *Door) Set(i time.Duration) {
     go func() {
         time.Sleep(left)
         d.c <- struct{}{}
+        println("C")
         d.l = time.Now()
         d.m.Unlock()
     }()
