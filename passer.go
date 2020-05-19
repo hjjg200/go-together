@@ -29,4 +29,6 @@ func (ps *Passer) Pass() {
     }()
 }
 
+// Passer defers from time.Ticker in that the first call does not get delayed
+
 // Deprecated SetInterval as it cannot affect the running timer

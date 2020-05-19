@@ -15,10 +15,12 @@ func benchmarkRailSwitch(bn, sz int) {
         wg.Add(sz)
         for j := 0; j < sz; j++ {
             go func(x int) {
-                rs.Queue(x, 1)
+                rs.Queue(x, 10)
                 wg.Done()
-                _ = x
-                rs.Proceed(x)
+                for k := 0; k < 10; k++ {
+                    _ = k
+                    rs.Proceed(x)
+                }
             }(j)
         }
         wg.Wait()
@@ -27,17 +29,17 @@ func benchmarkRailSwitch(bn, sz int) {
 }
 
 /*
-BenchmarkHoldSwitch_5              55105             28913 ns/op
-BenchmarkHoldSwitch_20             15007             89056 ns/op
-BenchmarkHoldSwitch_50             10000            204347 ns/op
-BenchmarkHoldSwitch_100             5316            598053 ns/op
-BenchmarkHoldSwitch_1000             127          12047837 ns/op
+BenchmarkHoldSwitch_5              15895             90652 ns/op
+BenchmarkHoldSwitch_20             10000            320783 ns/op
+BenchmarkHoldSwitch_50              4040            867337 ns/op
+BenchmarkHoldSwitch_100              608           2215341 ns/op
+BenchmarkHoldSwitch_1000               3        1099553892 ns/op
 
-BenchmarkRailSwitch_5              61608             19181 ns/op
-BenchmarkRailSwitch_20             16225             74290 ns/op
-BenchmarkRailSwitch_50              6300            190849 ns/op
-BenchmarkRailSwitch_100             2973            395289 ns/op
-BenchmarkRailSwitch_1000             218           5334570 ns/op
+BenchmarkRailSwitch_5              17856             66431 ns/op
+BenchmarkRailSwitch_20              4416            270465 ns/op
+BenchmarkRailSwitch_50              1714            695491 ns/op
+BenchmarkRailSwitch_100              825           1440796 ns/op
+BenchmarkRailSwitch_1000              78          18320271 ns/op
 */
 
 func BenchmarkRailSwitch_5(b *testing.B) {
@@ -182,18 +184,23 @@ func TestRailSwitch3(t *testing.T) {
 
     rs := NewRailSwitch()
 
-    sleep := func() {
-        time.Sleep(time.Nanosecond)
+    sleep := func(r int) {
+        for i := 0; i < r; i++ {
+            time.Sleep(time.Nanosecond)
+        }
+    }
+    pr := func(at, i int) {
+        fmt.Printf("%c%d,", at + 'a', i)
     }
     do := func(at int) {
-        fmt.Print(1)
-        sleep()
-        fmt.Print(2)
-        sleep()
-        fmt.Print(3)
-        sleep()
-        fmt.Print(4)
-        sleep()
+        pr(at, 1)
+        sleep(1)
+        pr(at, 2)
+        sleep(1)
+        pr(at, 3)
+        sleep(1)
+        pr(at, 4)
+        sleep(1)
         rs.Proceed(at)
     }
     repeat := func(at, c int) {
@@ -219,19 +226,25 @@ func TestRailSwitch3(t *testing.T) {
 
     go func() {
         repeat(0, 3)
+        sleep(2)
         repeat(0, 3)
+        sleep(5)
         repeat(0, 3)
     }()
-    sleep()
+    sleep(1)
     go func() {
         repeat(1, 3)
+        sleep(7)
         repeat(1, 3)
+        sleep(2)
         repeat(1, 3)
     }()
-    sleep()
+    sleep(1)
     go func() {
         repeat(2, 3)
+        sleep(1)
         repeat(2, 3)
+        sleep(7)
         repeat(2, 3)
     }()
 

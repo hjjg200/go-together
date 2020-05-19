@@ -23,10 +23,12 @@ func benchmarkHoldSwitch(bn, sz int) {
         wg.Add(sz)
         for j := 0; j < sz; j++ {
             go func(x int) {
-                hs.Add(x, 1)
+                hs.Add(x, 10)
                 wg.Done()
-                _ = x
-                hs.Done(x)
+                for k := 0; k < 10; k++ {
+                    _ = k
+                    hs.Done(x)
+                }
             }(j)
         }
         wg.Wait()
