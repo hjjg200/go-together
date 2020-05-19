@@ -108,7 +108,7 @@ func TestDoor4(t *testing.T) {
     
     t_reset()
     d := NewDoor(time.Second * 1)
-    for i := 2; i < 6; i++ {
+    for i := 2; i < 7; i++ {
         d.Knock()
         t_time("!")
         d.Set(time.Second * time.Duration(i))

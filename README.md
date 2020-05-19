@@ -184,9 +184,15 @@ Set sets a new duration for the Door. It replaces the timer that Knock may be wa
 
 ```go
 d := NewDoor(time.Second * 1)
-for i := 0; i < 5; i++ {
+for i := 2; i < 7; i++ {
     d.Knock()
     fmt.Println("!")
-    d.Set(time.Second * i)
+    d.Set(time.Second * time.Duration(i))
 }
+
+// T+00.000000 - !
+// T+02.000000 - !
+// T+05.000000 - !
+// T+09.000000 - !
+// T+14.000000 - !
 ```
