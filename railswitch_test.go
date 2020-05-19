@@ -141,46 +141,7 @@ func TestRailSwitch1(t *testing.T) {
 
 }
 
-func TestRailSwitch2( t *testing.T ) {
-
-    rs := NewRailSwitch()
-
-    rs.OnStart(1, func(){
-        log("  A STARTED")
-    })
-    rs.OnEnd(1, func() {
-        log("  A ENDED")
-    })
-
-    do := func(name string, at int, ms int) {
-        log("ENTERING", name)
-        if rs.Queue(at, 1) {
-            log("ENTERED", name)
-            time.Sleep(time.Millisecond * time.Duration(ms))
-            log("EXITING", name)
-            rs.Proceed(at)
-            log("EXITED", name)
-        }
-    }
-
-    go do( "A1", 1, 50 )
-    time.Sleep(time.Nanosecond)
-    go do( "A2", 1, 100 )
-    time.Sleep(time.Nanosecond)
-    go do( "B1", 2, 200 )
-    time.Sleep(time.Nanosecond)
-    go do( "C1", 3, 50 )
-    time.Sleep(time.Nanosecond)
-    go do( "C2", 3, 60 )
-    time.Sleep(time.Nanosecond)
-    go do( "B2", 2, 50 )
-    time.Sleep(time.Nanosecond)
-
-    rs.Close()
-
-}
-
-func TestRailSwitch3(t *testing.T) {
+func TestRailSwitch2(t *testing.T) {
 
     rs := NewRailSwitch()
 
