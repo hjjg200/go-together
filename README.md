@@ -1,6 +1,6 @@
 # package together
 
-** Unstable prototype **
+**Unstable prototype**
 
 ```go
 import "github.com/hjjg200/go/together"
