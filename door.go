@@ -35,12 +35,14 @@ func(d *Door) Knock() {
 
         d.m.Lock()
         i := d.i
+        l := d.l
         d.m.Unlock()
 
-        time.Sleep(d.i)
+        time.Sleep(i)
 
         d.m.Lock()
-        if d.i == i {
+        // Ensure unchanged
+        if d.i == i && d.l == l {
             d.c <- struct{}{}
             d.l = time.Now()
         }
@@ -53,7 +55,7 @@ func(d *Door) Knock() {
 // Change running timer
 // Hang if interval is being changed
 
-func(d *Door) SetInterval(i time.Duration) { go func() {
+func(d *Door) SetInterval(i time.Duration) {
 
     d.m.Lock()
     if d.i == i {
@@ -66,7 +68,7 @@ func(d *Door) SetInterval(i time.Duration) { go func() {
     n    := time.Now()
     past := n.Sub(d.l)
 
-    // Already past
+    // Pending in channel
     if past >= i0 {
         d.m.Unlock()
         return
@@ -74,17 +76,22 @@ func(d *Door) SetInterval(i time.Duration) { go func() {
 
     // Past
     if past >= i {
-        d.c <- struct{}{}
-        d.l = time.Now()
-        d.m.Unlock()
+        go func() {
+            d.c <- struct{}{}
+            d.l = time.Now()
+            d.m.Unlock()
+        }()
         return
     }
 
     // Not yet
     left := d.l.Add(i).Sub(n)
-    time.Sleep(left)
-    d.c <- struct{}{}
-    d.l = time.Now()
-    d.m.Unlock()
 
-}() }
+    go func() {
+        time.Sleep(left)
+        d.c <- struct{}{}
+        d.l = time.Now()
+        d.m.Unlock()
+    }()
+
+}

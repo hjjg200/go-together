@@ -29,7 +29,17 @@ func TestDoor1(t *testing.T) {
     d.Knock()
     log()
 
-    d.SetInterval(time.Millisecond * 40)
+    go func() {
+        d.SetInterval(time.Millisecond * 40)
+        d.SetInterval(time.Millisecond * 20)
+        d.SetInterval(time.Millisecond * 60)
+    }()
+
+    d.Knock()
+    log()
+    
+    d.Knock()
+    log()
 
     d.Knock()
     log()
