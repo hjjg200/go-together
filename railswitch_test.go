@@ -26,12 +26,34 @@ func benchmarkRailSwitch(bn, sz int) {
     }
 }
 
+/*
+BenchmarkHoldSwitch_5              55105             28913 ns/op
+BenchmarkHoldSwitch_20             15007             89056 ns/op
+BenchmarkHoldSwitch_50             10000            204347 ns/op
+BenchmarkHoldSwitch_100             5316            598053 ns/op
+BenchmarkHoldSwitch_1000             127          12047837 ns/op
+
+BenchmarkRailSwitch_5              61608             19181 ns/op
+BenchmarkRailSwitch_20             16225             74290 ns/op
+BenchmarkRailSwitch_50              6300            190849 ns/op
+BenchmarkRailSwitch_100             2973            395289 ns/op
+BenchmarkRailSwitch_1000             218           5334570 ns/op
+*/
 
 func BenchmarkRailSwitch_5(b *testing.B) {
     benchmarkRailSwitch(b.N, 5)
 }
 func BenchmarkRailSwitch_20(b *testing.B) {
     benchmarkRailSwitch(b.N, 20)
+}
+func BenchmarkRailSwitch_50(b *testing.B) {
+    benchmarkRailSwitch(b.N, 50)
+}
+func BenchmarkRailSwitch_100(b *testing.B) {
+    benchmarkRailSwitch(b.N, 100)
+}
+func BenchmarkRailSwitch_1000(b *testing.B) {
+    benchmarkRailSwitch(b.N, 1000)
 }
 
 var st time.Time

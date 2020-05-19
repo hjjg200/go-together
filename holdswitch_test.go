@@ -35,14 +35,6 @@ func benchmarkHoldSwitch(bn, sz int) {
 }
 
 /*
-BenchmarkHoldSwitch_3              56670             25646 ns/op
-BenchmarkHoldSwitch_10             30292             51208 ns/op
-BenchmarkHoldSwitch_20             12342             92063 ns/op
-BenchmarkHoldSwitch_30             10000            117204 ns/op
-BenchmarkHoldSwitch_50              6571            168362 ns/op
-BenchmarkHoldSwitch_100             4164            265172 ns/op
-
-
 BenchmarkHoldSwitch_5              57049             30108 ns/op
 BenchmarkHoldSwitch_20             13810             92816 ns/op
 BenchmarkHoldSwitch_50              9967            183696 ns/op
@@ -54,6 +46,15 @@ func BenchmarkHoldSwitch_5(b *testing.B) {
 }
 func BenchmarkHoldSwitch_20(b *testing.B) {
     benchmarkHoldSwitch(b.N, 20)
+}
+func BenchmarkHoldSwitch_50(b *testing.B) {
+    benchmarkHoldSwitch(b.N, 50)
+}
+func BenchmarkHoldSwitch_100(b *testing.B) {
+    benchmarkHoldSwitch(b.N, 100)
+}
+func BenchmarkHoldSwitch_1000(b *testing.B) {
+    benchmarkHoldSwitch(b.N, 1000)
 }
 
 func TestHoldSwitch01( t *testing.T ) {
