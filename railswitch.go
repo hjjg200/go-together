@@ -85,6 +85,9 @@ func(rs *RailSwitch) Queue(at, delta int) bool {
     if delta == 0 {
         panic("together: delta must not be 0")
     }
+    if at != rs.at && delta < 0 {
+        panic("together: must not proceed when it is not its turn")
+    }
     return rs.queue(at, delta)
 }
 

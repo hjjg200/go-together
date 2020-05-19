@@ -65,7 +65,7 @@ Returns a new LockerRoom.
 func(lr *LockerRoom) Lock(key interface{})
 ```
 
-Locks the mutex of the given key. If it is the first time to lock the key, the LockerRoom assigns a mutex to the relevant map according to the type of the key. `int`, `uint`, `int64`, and `uint64` are assigned to `map[int64] *sync.Mutex`; `string` is assigned to `map[string]`; pointers such as `*int` and `*struct{}` are assigned to `map[uintptr]`; the others are all assigned to `map[interface{}]`. A LockerRoom has separate maps for increased performance.
+Locks the mutex for the given key. If it is the first time to lock the key, the LockerRoom assigns a mutex to the relevant map according to the type of the key. `int`, `uint`, `int64`, and `uint64` are assigned to `map[int64] *sync.Mutex`; `string` is assigned to `map[string]`; pointers such as `*int` and `*struct{}` are assigned to `map[uintptr]`; the others are all assigned to `map[interface{}]`. A LockerRoom has separate maps for increased performance.
 
 ### <a name="LockerRoom.Unlock" href="#">func(*LockerRoom) Unlock</a>
 
@@ -73,7 +73,7 @@ Locks the mutex of the given key. If it is the first time to lock the key, the L
 func(lr *LockerRoom) Unlock(key interface{})
 ```
 
-Attempts to unlock the mutex of the given key.
+Attempts to unlock the mutex for the given key.
 
 
 ## <a name="RailSwitch" href="#">type RailSwitch</a>
@@ -115,7 +115,9 @@ if rs.Queue(groupCleanup, 1) {
 func(rs *RailSwitch) Proceed(at int)
 ```
 
-Proceed notifies the RailSwitch one of the group has completed its task. And when the value -- figuratively, the number of remaining trains -- of the current "rail" reaches 0, the RailSwitch gives turn to the awaiting group.
+Proceed notifies the RailSwitch that one of the current group has completed its task. And when the value -- figuratively, the number of remaining trains -- of the current "rail" reaches 0, the RailSwitch gives turn to the awaiting group.
+
+It panics if it is called for a group that is not in turn.
 
 ### <a name="RailSwitch.OnStart" href="#">func(*RailSwitch) OnStart</a>
 
@@ -153,10 +155,6 @@ type Door struct {
 ```
 
 Door is similar to `time.Ticker` but defers from it in that it does not delay the first call and that you can change the interval for running timer unlike `time.Ticker.Reset`.
-
-    * [func NewDoor(i time.Duration) *Door](#NewDoor)
-    * [func(d *Door) Knock()](#Door.Knock)
-    * [func(d *Door) Set(i time.Duration)](#Door.Set)
 
 ### <a name="NewDoor" href="#">func NewDoor</a>
 
