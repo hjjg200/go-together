@@ -1,6 +1,7 @@
 package together
 
 import (
+    "fmt"
     "sync"
 )
 
@@ -25,15 +26,22 @@ type RailSwitch struct {
     ctrain   chan *train
     registry sync.Mutex
     closed   bool
+
+    sttg map[int] func() // start triggers
+    edtg map[int] func() // end triggers
 }
 
 func NewRailSwitch() *RailSwitch {
     rs := new(RailSwitch)
+
     rs.at     = -1
     rs.rails  = make(map[int] *rail)
     rs.queued = make(map[int] bool)
     rs.cat    = make(chan int)
     rs.ctrain = make(chan *train)
+
+    rs.sttg = make(map[int] func())
+    rs.edtg = make(map[int] func())
 
     go func() {
 
@@ -46,6 +54,10 @@ func NewRailSwitch() *RailSwitch {
                     t.mid <- struct{}{}
                     return
                 }
+
+                // End of a rail
+                if end := rs.edtg[rs.at]; end != nil { end() }
+
                 rs.at = <- rs.cat
             }
             t.mid <- struct{}{}
@@ -86,9 +98,14 @@ func(rs *RailSwitch) queue(at, delta int) bool {
         go func() {
             for t := range queue {
                 if rs.at != r.at && !rs.queued[r.at] {
+
                     rs.queued[r.at] = true
                     rs.cat <- r.at
+                    // Start of a rail
+                    if start := rs.sttg[r.at]; start != nil { start() }
+
                     rs.queued[r.at] = false
+
                 }
                 rs.ctrain <- t
                 <- t.mid
@@ -113,9 +130,17 @@ func(rs *RailSwitch) Proceed(at int) {
     rs.Queue(at, -1)
 }
 
-func(rs *RailSwitch) Close() {
+func(rs *RailSwitch) OnStart(at int, t func()) { rs.sttg[at] = t }
+func(rs *RailSwitch) OnEnd(at int, t func())   { rs.edtg[at] = t }
+
+func(rs *RailSwitch) Close() error {
 
     rs.registry.Lock()
+    if rs.closed {
+        rs.registry.Unlock()
+        return fmt.Errorf("together: RailSwitch is already closed")
+    }
+
     rs.closed = true
     rs.registry.Unlock()
 
@@ -125,11 +150,13 @@ func(rs *RailSwitch) Close() {
     close(rs.ctrain)
     rs.cat    = nil
     rs.ctrain = nil
-    
+
     for _, r := range rs.rails {
         close(r.queue)
     }
     rs.rails  = nil
     rs.queued = nil
+
+    return nil
 
 }
