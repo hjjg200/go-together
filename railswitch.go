@@ -5,6 +5,10 @@ import (
     "sync"
 )
 
+const (
+    minInt32  = -1 << 31
+)
+
 type train struct {
     delta int
     mid chan struct{}
@@ -51,7 +55,6 @@ func NewRailSwitch() *RailSwitch {
 
             rs.value += t.delta
 
-            //print(rs.at); print(" - "); println(rs.value)
             if rs.value == 0 {
 
                 if t.delta == 0 { // closer train
@@ -62,7 +65,7 @@ func NewRailSwitch() *RailSwitch {
                 // End of a rail
                 if end := rs.edtg[rs.at]; end != nil { end() }
 
-                rs.at = -2
+                rs.at = minInt32
                 t.mid <- struct{}{}
                 rs.at = <- rs.cat
                 continue
@@ -82,19 +85,13 @@ func NewRailSwitch() *RailSwitch {
 }
 
 func(rs *RailSwitch) Queue(at, delta int) bool {
-    if delta == 0 {
-        panic("together: delta must not be 0")
-    }
-    if at != rs.at && delta < 0 {
-        panic("together: must not proceed when it is not its turn")
-    }
-    return rs.queue(at, delta)
-}
 
-func(rs *RailSwitch) queue(at, delta int) bool {
+    if delta <= 0 {
+        panic("together: delta must be above 0")
+    }
 
     rs.registry.Lock()
-    if rs.closed && delta > 0 { // <- delta > 0
+    if rs.closed {
         rs.registry.Unlock()
         return false
     }
@@ -129,24 +126,25 @@ func(rs *RailSwitch) queue(at, delta int) bool {
     }
     rs.registry.Unlock()
 
-    mid := make(chan struct{}, 1)
-    end := make(chan struct{}, 1)
-    r.queue <- &train{
-        delta, mid, end,
-    }
-    <- end
+    rs.queue(at, delta)
     return true
 
 }
 
 func(rs *RailSwitch) Proceed(at int) {
+    if rs.at != at {
+        panic("together: proceed attempt for stopped rail")
+    }
+    rs.queue(at, -1)
+}
+
+func(rs *RailSwitch) queue(at, delta int) {
     mid := make(chan struct{}, 1)
     end := make(chan struct{}, 1)
     rs.rails[at].queue <- &train{
-        -1, mid, end,
+        delta, mid, end,
     }
     <- end
-    //rs.Queue(at, -1)
 }
 
 func(rs *RailSwitch) OnStart(at int, t func()) { rs.sttg[at] = t }
