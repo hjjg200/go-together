@@ -115,3 +115,5 @@ func TestDoor4(t *testing.T) {
     }
 
 }
+
+// TODO: when Knock is called long after door is created, and set is called prior to that
