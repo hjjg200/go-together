@@ -141,7 +141,7 @@ OnEnd is used to set trigger for a certain group. The trigger is guaranteed to s
 func(rs *RailSwitch) Close() error
 ```
 
-Close gracefully closes the RailSwitch. It waits for the "trains" and "trails" that were already queued for operating, and once they are done, it closes underlying channels and internal goroutines of RailSwitch and blocks the trains and rails came after the call for Close and blocks any consecutive train.
+Close gracefully closes the RailSwitch. It waits for the "trains" and "rails" that were already queued for operating, and once they are done, it closes underlying channels and internal goroutines of RailSwitch and blocks the trains and rails came after the call for Close and blocks any consecutive train.
 
 It returns an error if it is already closed.
 
