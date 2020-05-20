@@ -58,12 +58,16 @@ func NewRailSwitch() *RailSwitch {
                     return
                 }
 
-                // End of a rail
-                if end := rs.edtg[rs.at]; end != nil { end() }
+                // End trigger
+                end := rs.edtg[rs.at]
 
                 rs.at = -1
                 t.mid <- struct{}{}
                 rs.at = <- rs.cat
+
+                // End of a rail
+                if end != nil { end() }
+
                 continue
 
             }

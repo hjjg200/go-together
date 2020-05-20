@@ -135,7 +135,7 @@ OnStart is used to set trigger for a certain group. The trigger is guaranteed to
 func(rs *RailSwitch) OnEnd(at int, t func())
 ```
 
-OnEnd is used to set trigger for a certain group. The trigger is guaranteed to start and complete right after the last operation of the group and prior to the start trigger and the first operation of the next group.
+OnEnd is used to set trigger for a certain group. The trigger is guaranteed to start and complete when a switch happens or the RailSwitch is closed; if it is when a switch happened the trigger is run and completed prior to the start trigger and the first operation of the next group.
 
 ### <a name="RailSwitch.Close" href="#">func(*RailSwitch) Close</a>
 
