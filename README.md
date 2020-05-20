@@ -102,6 +102,8 @@ func(rs *RailSwitch) Queue(at, delta int) bool
 
 Queue hangs until its group gains turn and returns true if the group successfully gained turn and false if the RailSwitch was closed. Therefore, you need to wrap it with a if block for proper use.
 
+And number below 0 is not allowed for `at`. They are reserved for internal use.
+
 ```go
 if rs.Queue(groupCleanup, 1) {
     // Successfully gained turn

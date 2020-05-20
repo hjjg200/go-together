@@ -5,10 +5,6 @@ import (
     "sync"
 )
 
-const (
-    minInt32  = -1 << 31
-)
-
 type train struct {
     delta int
     mid chan struct{}
@@ -65,7 +61,7 @@ func NewRailSwitch() *RailSwitch {
                 // End of a rail
                 if end := rs.edtg[rs.at]; end != nil { end() }
 
-                rs.at = minInt32
+                rs.at = -1
                 t.mid <- struct{}{}
                 rs.at = <- rs.cat
                 continue
@@ -139,6 +135,10 @@ func(rs *RailSwitch) Proceed(at int) {
 }
 
 func(rs *RailSwitch) queue(at, delta int) {
+    if at < 0 {
+        panic("together: at must not be below 0")
+    }
+
     mid := make(chan struct{}, 1)
     end := make(chan struct{}, 1)
     rs.rails[at].queue <- &train{
@@ -162,7 +162,7 @@ func(rs *RailSwitch) Close() error {
     rs.closed = true
 
     // send closer train
-    rs.cat <- -1 // -1 is just an arbitrary number
+    rs.cat <- -1 // closer rail
     end := make(chan struct{}, 1)
     rs.ctrain <- &train{
         0, nil, end,
