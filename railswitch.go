@@ -45,7 +45,9 @@ func NewRailSwitch() *RailSwitch {
 
     go func() {
 
+        // First rail
         rs.at = <- rs.cat
+        if start := rs.sttg[rs.at]; start != nil { start() }
 
         for t := range rs.ctrain {
 
@@ -58,15 +60,23 @@ func NewRailSwitch() *RailSwitch {
                     return
                 }
 
-                // End trigger
-                end := rs.edtg[rs.at]
+                // For later use
+                at0    := rs.at // old at
+                end, _ := rs.edtg[at0]
 
+                // Make switch
                 rs.at = -1
                 t.mid <- struct{}{}
                 rs.at = <- rs.cat
 
-                // End of a rail
-                if end != nil { end() }
+                // If rail changed
+                if rs.at != at0 {
+                    // End of a rail
+                    if end != nil { end() }
+
+                    // Start of a rail
+                    if start := rs.sttg[rs.at]; start != nil { start() }
+                }
 
                 continue
 
@@ -111,9 +121,6 @@ func(rs *RailSwitch) Queue(at, delta int) bool {
 
                     rs.queued[r.at] = true
                     rs.cat <- r.at
-                    // Start of a rail
-                    if start := rs.sttg[r.at]; start != nil { start() }
-
                     rs.queued[r.at] = false
 
                 }

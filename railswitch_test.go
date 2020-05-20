@@ -216,37 +216,56 @@ func TestRailSwitch3(t *testing.T) {
     t_reset()
     t_time("Single-railed")
 
+    rs.OnStart(0, func() {
+        t_time("START TRIGGER")
+    })
+    rs.OnEnd(0, func() {
+        t_time("END TRIGGER")
+    })
+
     go func() {
-        for rs.Queue(0, 1) {
-            t_sleep(2)
-            t_time("A")
-            rs.Proceed(0)
-            t_time("A2")
+        t_sleep(3)
+        for {
+            t_sleep(5)
+            if rs.Queue(0, 1) {
+                t_time("A")
+                rs.Proceed(0)
+            } else {
+                break
+            }
         }
         t_time("A END")
     }()
     go func() {
-        for rs.Queue(0, 1) {
-            t_sleep(3)
-            t_time("B")
-            rs.Proceed(0)
-            t_time("B2")
+        t_sleep(13)
+        for {
+            t_sleep(5)
+            if rs.Queue(0, 1) {
+                t_time("B")
+                rs.Proceed(0)
+            } else {
+                break
+            }
         }
         t_time("B END")
     }()
     go func() {
-        for rs.Queue(0, 1) {
+        t_sleep(23)
+        for {
             t_sleep(5)
-            t_time("C")
-            rs.Proceed(0)
-            t_time("C2")
+            if rs.Queue(0, 1) {
+                t_time("C")
+                rs.Proceed(0)
+            } else {
+                break
+            }
         }
         t_time("C END")
     }()
-    t_sleep(5)
+    t_sleep(30)
     t_time("CLOSING")
     rs.Close()
-    t_sleep(35)
+    t_sleep(50)
     t_time("END")
 
 }
