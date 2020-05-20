@@ -35,11 +35,11 @@ BenchmarkHoldSwitch_50              4040            867337 ns/op
 BenchmarkHoldSwitch_100              608           2215341 ns/op
 BenchmarkHoldSwitch_1000               3        1099553892 ns/op
 
-BenchmarkRailSwitch_5              17856             66431 ns/op
-BenchmarkRailSwitch_20              4416            270465 ns/op
-BenchmarkRailSwitch_50              1714            695491 ns/op
-BenchmarkRailSwitch_100              825           1440796 ns/op
-BenchmarkRailSwitch_1000              78          18320271 ns/op
+BenchmarkRailSwitch_5              19005             63072 ns/op
+BenchmarkRailSwitch_20              4554            259334 ns/op
+BenchmarkRailSwitch_50              1798            666449 ns/op
+BenchmarkRailSwitch_100              880           1362660 ns/op
+BenchmarkRailSwitch_1000              78          16903054 ns/op
 */
 
 func BenchmarkRailSwitch_5(b *testing.B) {
