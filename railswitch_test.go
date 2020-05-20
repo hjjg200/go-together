@@ -211,11 +211,11 @@ func TestRailSwitch2(t *testing.T) {
 
 func TestRailSwitch3(t *testing.T) {
 
-    t.Log("Single-Railed")
-
     rs := NewRailSwitch()
 
     t_reset()
+    t_time("Single-railed")
+
     go func() {
         for rs.Queue(0, 1) {
             t_sleep(2)
@@ -248,5 +248,21 @@ func TestRailSwitch3(t *testing.T) {
     rs.Close()
     t_sleep(35)
     t_time("END")
+
+}
+
+func TestRailSwitch4(t *testing.T) {
+
+    rs := NewRailSwitch()
+
+    t_reset()
+    t_time("Immediate close")
+
+    rs.Queue(0, 1)
+    go func() {
+        t_time("A")
+        rs.Proceed(0)
+    }()
+    rs.Close()
 
 }
