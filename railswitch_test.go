@@ -145,7 +145,7 @@ func TestRailSwitch2(t *testing.T) {
     rs := NewRailSwitch()
 
     pr := func(at, i int) {
-        fmt.Printf("%c%d,", at + 'a', i)
+        fmt.Printf("%c%d,", at + 'b', i)
     }
     do := func(at int) {
         pr(at, 1)
@@ -166,7 +166,7 @@ func TestRailSwitch2(t *testing.T) {
         }
     }
     ready := func(at int) {
-        char := rune(at) + 'A'
+        char := rune(at) + 'B'
         rs.OnStart(at, func() {
             fmt.Printf("START %c - ", char)
         })
@@ -175,10 +175,18 @@ func TestRailSwitch2(t *testing.T) {
         })
     }
 
+    ready(-1)
     ready(0)
     ready(1)
     ready(2)
 
+    go func() {
+        repeat(-1, 3)
+        t_sleep(2)
+        repeat(-1, 3)
+        t_sleep(5)
+        repeat(-1, 3)
+    }()
     go func() {
         repeat(0, 3)
         t_sleep(2)

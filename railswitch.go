@@ -53,9 +53,8 @@ func NewRailSwitch() *RailSwitch {
 
             if rs.value == 0 {
 
-                if rs.at == -1 {
-                    // Close
-                    t.mid <- struct{}{}
+                if t.delta == 0 { // closer train
+                    t.end <- struct{}{}
                     return
                 }
 
@@ -79,9 +78,6 @@ func NewRailSwitch() *RailSwitch {
 }
 
 func(rs *RailSwitch) Queue(at, delta int) bool {
-    if at < 0 {
-        panic("together: at must be 0 or higher")
-    }
     if delta == 0 {
         panic("together: delta must not be 0")
     }
@@ -148,6 +144,7 @@ func(rs *RailSwitch) OnEnd(at int, t func())   { rs.edtg[at] = t }
 
 func(rs *RailSwitch) Close() error {
 
+    // Close registry
     rs.registry.Lock()
     if rs.closed {
         rs.registry.Unlock()
@@ -155,10 +152,18 @@ func(rs *RailSwitch) Close() error {
     }
 
     rs.closed = true
+
+    // send closer train
+    rs.cat <- -1 // -1 is just an arbitrary number
+    end := make(chan struct{}, 1)
+    rs.ctrain <- &train{
+        0, nil, end,
+    }
+    <- end
+
     rs.registry.Unlock()
 
-    rs.queue(-1, 0)
-
+    // Cleanup
     close(rs.cat)
     close(rs.ctrain)
     rs.cat    = nil
