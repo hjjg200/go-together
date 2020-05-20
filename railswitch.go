@@ -51,6 +51,7 @@ func NewRailSwitch() *RailSwitch {
 
             rs.value += t.delta
 
+            //print(rs.at); print(" - "); println(rs.value)
             if rs.value == 0 {
 
                 if t.delta == 0 { // closer train
@@ -61,7 +62,10 @@ func NewRailSwitch() *RailSwitch {
                 // End of a rail
                 if end := rs.edtg[rs.at]; end != nil { end() }
 
+                rs.at = -2
+                t.mid <- struct{}{}
                 rs.at = <- rs.cat
+                continue
 
             }
 
@@ -90,7 +94,7 @@ func(rs *RailSwitch) Queue(at, delta int) bool {
 func(rs *RailSwitch) queue(at, delta int) bool {
 
     rs.registry.Lock()
-    if rs.closed && delta > 0 {
+    if rs.closed && delta > 0 { // <- delta > 0
         rs.registry.Unlock()
         return false
     }
@@ -136,7 +140,13 @@ func(rs *RailSwitch) queue(at, delta int) bool {
 }
 
 func(rs *RailSwitch) Proceed(at int) {
-    rs.Queue(at, -1)
+    mid := make(chan struct{}, 1)
+    end := make(chan struct{}, 1)
+    rs.rails[at].queue <- &train{
+        -1, mid, end,
+    }
+    <- end
+    //rs.Queue(at, -1)
 }
 
 func(rs *RailSwitch) OnStart(at int, t func()) { rs.sttg[at] = t }

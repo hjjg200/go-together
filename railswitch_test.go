@@ -216,3 +216,45 @@ func TestRailSwitch2(t *testing.T) {
     rs.Close()
 
 }
+
+func TestRailSwitch3(t *testing.T) {
+
+    t.Log("Single-Railed")
+
+    rs := NewRailSwitch()
+
+    t_reset()
+    go func() {
+        for rs.Queue(0, 1) {
+            t_sleep(2)
+            t_time("A")
+            rs.Proceed(0)
+            t_time("A2")
+        }
+        t_time("A END")
+    }()
+    go func() {
+        for rs.Queue(0, 1) {
+            t_sleep(3)
+            t_time("B")
+            rs.Proceed(0)
+            t_time("B2")
+        }
+        t_time("B END")
+    }()
+    go func() {
+        for rs.Queue(0, 1) {
+            t_sleep(5)
+            t_time("C")
+            rs.Proceed(0)
+            t_time("C2")
+        }
+        t_time("C END")
+    }()
+    t_sleep(5)
+    t_time("CLOSING")
+    rs.Close()
+    t_sleep(35)
+    t_time("END")
+
+}
