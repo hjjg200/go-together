@@ -111,6 +111,18 @@ if rs.Queue(groupCleanup, 1) {
 // Failed to gain turn
 ```
 
+`for` blocks can be used for repeating tasks:
+
+```go
+// Repeating a task every minute
+for rs.Queue(groupMain, 1) {
+    foo()
+    rs.Proceed(groupMain)
+    time.Sleep(1 * time.Minute)
+}
+```
+
+
 ### <a name="RailSwitch.Proceed" href="#">func(*RailSwitch) Proceed</a>
 
 ```go
