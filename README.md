@@ -1,7 +1,7 @@
 # package together
 
 ```go
-import "github.com/hjjg200/go/together"
+import "github.com/hjjg200/go-together"
 ```
 
 Package together provides concurrent utilities. It is currently in its beta stage and there might be bugs.
